@@ -1,0 +1,148 @@
+search:
+  min_price: 5000000
+  locations:
+    - name: "Scottsdale"
+      state: "AZ"
+      zip_codes: ["85255", "85259", "85260", "85262", "85266"]
+    - name: "Paradise Valley"
+      state: "AZ"
+      zip_codes: ["85253"]
+  status_filter:
+    - "new_construction"
+    - "under_construction"
+    - "pre_construction"
+
+communities:
+  north_scottsdale:
+    - name: "Silverleaf"
+      subdivisions: ["Village", "Upper Canyon", "Horseshoe Canyon", "Lower Canyon", "The Summit", "ICON"]
+    - name: "Desert Mountain"
+      subdivisions: []
+    - name: "DC Ranch"
+      subdivisions: []
+    - name: "Estancia"
+      subdivisions: []
+    - name: "Whisper Rock"
+      subdivisions: []
+    - name: "Pinnacle Peak Estates"
+      subdivisions: []
+    - name: "McDowell Mountain Ranch"
+      subdivisions: []
+    - name: "Troon North"
+      subdivisions: []
+  paradise_valley:
+    - name: "Paradise Valley"
+      subdivisions: []
+    - name: "Arcadia"
+      subdivisions: []
+    - name: "Mummy Mountain"
+      subdivisions: []
+    - name: "Camelback Mountain"
+      subdivisions: []
+
+builders:
+  - name: "Cullum Homes"
+    url: "https://cullumhomes.com"
+    projects_path: "/projects"
+  - name: "Calvis Wyant"
+    url: "https://www.calviswyant.com"
+    projects_path: "/portfolio"
+  - name: "Fratantoni Luxury Estates"
+    url: "https://www.fratantoniluxuryestates.com"
+    projects_path: "/portfolio"
+  - name: "Camelot Homes"
+    url: "https://camelothomes.com"
+    projects_path: "/communities"
+  - name: "Desert Star Construction"
+    url: "https://desertstarconstruction.com"
+    projects_path: "/projects"
+  - name: "AFT Construction"
+    url: "https://www.aftconstruction.com"
+    projects_path: "/portfolio"
+  - name: "BedBrock Developers"
+    url: "https://bedbrock.com"
+    projects_path: "/projects"
+  - name: "Fenn Rogers Custom Homes"
+    url: "https://www.fennrogers.com"
+    projects_path: "/projects"
+  - name: "Salcito Custom Homes"
+    url: "https://www.salcito.com"
+    projects_path: "/portfolio"
+  - name: "Starwood Custom Homes"
+    url: "https://www.starwoodcustom.com"
+    projects_path: "/communities"
+  - name: "Peak One Builders"
+    url: "https://peakonebuilders.com"
+    projects_path: "/portfolio"
+  - name: "Integrity Luxury Homes"
+    url: "https://integrityluxuryhomes.com"
+    projects_path: "/projects"
+  - name: "Sonora West Development"
+    url: "https://www.sonorawestdev.com"
+    projects_path: "/projects"
+  - name: "Toll Brothers"
+    url: "https://www.tollbrothers.com"
+    projects_path: "/luxury-homes-for-sale/Arizona"
+
+luxury_realty_sites:
+  - name: "Williams Luxury Homes"
+    url: "https://williamsluxuryhomes.com"
+    search_paths:
+      - "/silverleaf-estate-homes-properties-sale/"
+      - "/dc-ranch-luxury-homes-sale/"
+      - "/desert-mountain-homes-sale/"
+      - "/estancia-scottsdale-homes-sale/"
+      - "/pinnacle-peak-luxury-homes-sale/"
+      - "/paradise-valley-homes-sale/"
+  - name: "RETSY"
+    url: "https://retsy.com"
+    search_paths:
+      - "/scottsdale-az-homes-for-sale/"
+      - "/paradise-valley-az-homes-for-sale/"
+  - name: "Russ Lyon Sothebys"
+    url: "https://www.russlyon.com"
+    search_paths:
+      - "/results-gallery/?searchtype=3&city=Scottsdale&minprice=5000000&status=active"
+      - "/results-gallery/?searchtype=3&city=Paradise+Valley&minprice=5000000&status=active"
+  - name: "ROCO Luxury Homes"
+    url: "https://rocoluxuryhomes.com"
+    search_paths:
+      - "/scottsdale-homes-for-sale/"
+      - "/paradise-valley-homes-for-sale/"
+  - name: "Scottsdale Real Estate Team"
+    url: "https://scottsdalerealestateteam.com"
+    search_paths:
+      - "/scottsdale-new-construction/"
+
+listing_sites:
+  - name: "Zillow"
+    base_url: "https://www.zillow.com"
+    search_urls:
+      - "/scottsdale-az/new-construction/?searchQueryState=%7B%22price%22%3A%7B%22min%22%3A5000000%7D%7D"
+      - "/paradise-valley-az/new-construction/?searchQueryState=%7B%22price%22%3A%7B%22min%22%3A5000000%7D%7D"
+  - name: "Realtor.com"
+    base_url: "https://www.realtor.com"
+    search_urls:
+      - "/realestateandhomes-search/Scottsdale_AZ/type-single-family-home/price-5000000-na/nc-hide/age-new"
+      - "/realestateandhomes-search/Paradise-Valley_AZ/type-single-family-home/price-5000000-na/nc-hide/age-new"
+  - name: "Redfin"
+    base_url: "https://www.redfin.com"
+    search_urls:
+      - "/city/16192/AZ/Scottsdale/filter/min-price=5M,property-type=house,new-construction=true"
+      - "/city/13810/AZ/Paradise-Valley/filter/min-price=5M,property-type=house,new-construction=true"
+
+county_records:
+  assessor_api: "https://mcassessor.maricopa.gov/api"
+  permit_viewer: "https://apps.pnd.maricopa.gov/PermitViewer"
+  accela_portal: "https://accela.maricopa.gov/CitizenAccessMCOSS"
+
+scraping:
+  delay_min: 2
+  delay_max: 5
+  max_retries: 3
+  selenium_headless: true
+  request_timeout: 30
+
+output:
+  directory: "output"
+  filename_prefix: "luxury_homes_scottsdale_pv"
