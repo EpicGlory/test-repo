@@ -3,7 +3,7 @@ __pycache__/
 *.pyo
 .env
 *.log
-output/*.xlsx
+# output/*.xlsx  # Temporarily allow xlsx for initial data push
 .selenium/
 venv/
 .venv/
