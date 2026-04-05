@@ -1,0 +1,215 @@
+search:
+  min_price: 5000000
+  locations:
+    - name: "Park City"
+      state: "UT"
+      zip_codes: ["84060", "84098"]
+    - name: "Kamas"
+      state: "UT"
+      zip_codes: ["84036"]
+    - name: "Coalville"
+      state: "UT"
+      zip_codes: ["84017"]
+    - name: "Oakley"
+      state: "UT"
+      zip_codes: ["84055"]
+    - name: "Peoa"
+      state: "UT"
+      zip_codes: ["84061"]
+  status_filter:
+    - "new_construction"
+    - "under_construction"
+    - "pre_construction"
+
+communities:
+  park_city_area:
+    - name: "Deer Valley"
+      subdivisions:
+        - "Empire Pass"
+        - "Silver Lake Village"
+        - "Bald Eagle"
+        - "Deer Crest"
+        - "Queen Esther"
+        - "Upper Deer Valley"
+    - name: "The Colony at White Pine Canyon"
+      subdivisions: []
+    - name: "Promontory"
+      subdivisions:
+        - "The Ranch Club"
+        - "The Hills"
+        - "Nicklaus Village"
+        - "Pete Dye Village"
+    - name: "Glenwild"
+      subdivisions: []
+    - name: "Red Cloud"
+      subdivisions: []
+    - name: "Stein Eriksen Residences"
+      subdivisions: []
+    - name: "Park Meadows"
+      subdivisions: []
+    - name: "Old Town"
+      subdivisions: []
+    - name: "Thaynes Canyon"
+      subdivisions: []
+    - name: "Aerie"
+      subdivisions: []
+  snyderville_basin:
+    - name: "Jeremy Ranch"
+      subdivisions: []
+    - name: "Pinebrook"
+      subdivisions: []
+    - name: "Silver Creek"
+      subdivisions: []
+    - name: "Summit Park"
+      subdivisions: []
+    - name: "Kimball Junction"
+      subdivisions: []
+  east_summit:
+    - name: "Wohali"
+      subdivisions: []
+    - name: "Kamas Valley"
+      subdivisions: []
+
+builders:
+  - name: "Jaffa Group Design Build"
+    url: "https://www.jaffagroup.com"
+    projects_path: "/projects"
+  - name: "Upwall Design Architects"
+    url: "https://upwalldesign.com"
+    projects_path: "/projects"
+  - name: "Jackson Paine Design Build"
+    url: "https://jacksonpaine.com"
+    projects_path: "/portfolio"
+  - name: "Germania Construction"
+    url: "https://www.germaniaconstruction.com"
+    projects_path: "/portfolio"
+  - name: "Otto Walker Architects"
+    url: "https://ottowalker.com"
+    projects_path: "/projects"
+  - name: "Alair Homes Park City"
+    url: "https://www.alairhomes.com/park-city"
+    projects_path: "/projects"
+  - name: "Magleby Construction"
+    url: "https://maglebyconstruction.com"
+    projects_path: "/portfolio"
+  - name: "Park City Design+Build"
+    url: "https://parkcitydesignbuild.com"
+    projects_path: "/projects"
+  - name: "Highland Custom Homes"
+    url: "https://www.highlandcustomhomes.com"
+    projects_path: "/portfolio"
+  - name: "Think Architecture"
+    url: "https://thinkaec.com"
+    projects_path: "/projects"
+  - name: "Sparano + Mooney Architecture"
+    url: "https://sparanomooney.com"
+    projects_path: "/projects"
+  - name: "Imbue Design"
+    url: "https://imbuedesign.com"
+    projects_path: "/projects"
+  - name: "Axis Architects"
+    url: "https://axisarchitects.com"
+    projects_path: "/projects"
+  - name: "Clive Bridgwater Homes"
+    url: "https://clivebridgwater.com"
+    projects_path: "/portfolio"
+  - name: "Cameo Homes"
+    url: "https://www.cameohomesinc.com"
+    projects_path: "/portfolio"
+
+luxury_realty_sites:
+  - name: "Summit Sothebys International Realty"
+    url: "https://www.summitsothebysrealty.com"
+    search_paths:
+      - "/deer-valley-real-estate"
+      - "/park-city-real-estate"
+      - "/promontory-real-estate"
+      - "/the-colony-real-estate"
+      - "/glenwild-real-estate"
+      - "/empire-pass-real-estate"
+  - name: "Berkshire Hathaway HomeServices Utah"
+    url: "https://www.bhhsutah.com"
+    search_paths:
+      - "/park-city-utah-homes-for-sale/"
+      - "/deer-valley-utah-homes-for-sale/"
+      - "/promontory-utah-homes-for-sale/"
+  - name: "Engel & Volkers Park City"
+    url: "https://parkcity.evrealestate.com"
+    search_paths:
+      - "/properties/park-city-ut"
+      - "/properties/deer-valley-ut"
+  - name: "Windermere Real Estate Utah"
+    url: "https://www.windermereutah.com"
+    search_paths:
+      - "/listings/park-city-ut/"
+      - "/listings/deer-valley-ut/"
+  - name: "The Agency Park City"
+    url: "https://www.theagencyre.com"
+    search_paths:
+      - "/offices/park-city"
+  - name: "Compass Park City"
+    url: "https://www.compass.com"
+    search_paths:
+      - "/homes-for-sale/park-city-ut/price=5000000-any/"
+      - "/homes-for-sale/deer-valley-park-city-ut/price=5000000-any/"
+  - name: "Christies International Park City"
+    url: "https://www.christiesrealestate.com"
+    search_paths:
+      - "/sales/park-city-utah-real-estate"
+
+listing_sites:
+  - name: "Zillow"
+    base_url: "https://www.zillow.com"
+    search_urls:
+      - "/park-city-ut/new-construction/?searchQueryState=%7B%22price%22%3A%7B%22min%22%3A5000000%7D%7D"
+      - "/deer-valley-park-city-ut/new-construction/?searchQueryState=%7B%22price%22%3A%7B%22min%22%3A5000000%7D%7D"
+      - "/kamas-ut/new-construction/?searchQueryState=%7B%22price%22%3A%7B%22min%22%3A5000000%7D%7D"
+  - name: "Realtor.com"
+    base_url: "https://www.realtor.com"
+    search_urls:
+      - "/realestateandhomes-search/Park-City_UT/type-single-family-home/price-5000000-na/nc-hide/age-new"
+      - "/realestateandhomes-search/Kamas_UT/type-single-family-home/price-5000000-na/nc-hide/age-new"
+      - "/realestateandhomes-search/Coalville_UT/type-single-family-home/price-5000000-na/nc-hide/age-new"
+  - name: "Redfin"
+    base_url: "https://www.redfin.com"
+    search_urls:
+      - "/city/14186/UT/Park-City/filter/min-price=5M,property-type=house,new-construction=true"
+      - "/city/9607/UT/Kamas/filter/min-price=5M,property-type=house,new-construction=true"
+
+county_records:
+  name: "Summit County UT"
+  # Summit County Utah Assessor does not publish a documented public JSON API;
+  # the scraper will fall back to the HTML search endpoint.
+  assessor_api: ""
+  assessor_search_url: "https://tax.summitcountyutah.gov/taxweb/search.jsp"
+  # Summit County uses CitizenServe for online permit tracking / applications:
+  permit_viewer: "https://www.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=253"
+  # Park City municipal building permits (separate jurisdiction inside Summit County):
+  accela_portal: "https://parkcity-energovweb.tylerhost.net/apps/SelfService"
+
+styles:
+  - "Mountain Modern"
+  - "Mountain Contemporary"
+  - "Contemporary"
+  - "Modern"
+  - "Transitional"
+  - "Rustic Modern"
+  - "Alpine"
+  - "Chalet"
+  - "Log Home"
+  - "Timber Frame"
+  - "Craftsman"
+  - "Farmhouse"
+  - "Mid-Century Modern"
+  - "Scandinavian"
+
+scraping:
+  delay_min: 2
+  delay_max: 5
+  max_retries: 3
+  selenium_headless: true
+  request_timeout: 30
+
+output:
+  directory: "output"
+  filename_prefix: "luxury_homes_summit_county_ut"
