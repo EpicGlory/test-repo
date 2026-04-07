@@ -731,12 +731,16 @@ class TechChartGenerator:
             ("Platform business / data monetization", 60, 108, self.config.AMBER_HEX),
             ("Ecosystem orchestration play", 72, 120, self.config.AMBER_HEX),
         ]
-        fig, ax = plt.subplots(figsize=(12, 7.5))
+        fig, ax = plt.subplots(figsize=(14, 7.5))
         for i, (name, start, end, color) in enumerate(workstreams):
             ax.barh(i, end - start, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-            ax.text(start + (end-start)/2, i, name, ha="center", va="center",
-                    fontsize=8, color="white", fontweight="bold")
+        # Use y-axis labels for workstream names to prevent text clipping
+        ax.set_yticks(range(len(workstreams)))
+        ax.set_yticklabels([name for name, _, _, _ in workstreams],
+                           fontsize=7.5, fontweight="bold")
+        for i, (_, _, _, color) in enumerate(workstreams):
+            ax.get_yticklabels()[i].set_color(color)
         ax.axvline(x=12, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=60, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(6, len(workstreams)+0.3, "HORIZON 1\nFoundation (Y1)", ha="center",
@@ -745,7 +749,6 @@ class TechChartGenerator:
                 ha="center", fontsize=10, fontweight="bold", color=self.config.BLUE_HEX)
         ax.text(90, len(workstreams)+0.3, "HORIZON 3\nReinvention (Y6-10)",
                 ha="center", fontsize=10, fontweight="bold", color=self.config.AMBER_HEX)
-        ax.set_yticks([])
         ax.set_xlabel("Months from Inception", fontsize=10)
         ax.set_xlim(0, 122)
         ax.set_ylim(-0.8, len(workstreams)+1.2)
@@ -753,6 +756,7 @@ class TechChartGenerator:
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3)
         ax.set_axisbelow(True)
+        fig.subplots_adjust(left=0.30, right=0.95)
         return self._finalize(fig)
 
     # 12. Cumulative ROI

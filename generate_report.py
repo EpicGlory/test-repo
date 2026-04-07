@@ -644,21 +644,24 @@ class ChartGenerator:
             ("Strategic M&A / partnership eval", 48, 84, self.config.AMBER_HEX),
             ("Cooperative capital restructuring", 60, 120, self.config.AMBER_HEX),
         ]
-        fig, ax = plt.subplots(figsize=(11, 6.5))
+        fig, ax = plt.subplots(figsize=(14, 7))
         for i, (name, start, end, color) in enumerate(workstreams):
             ax.barh(i, end - start, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-            ax.text(start + (end-start)/2, i, name, ha="center", va="center",
-                    fontsize=8.5, color="white", fontweight="bold")
+        # Use y-axis labels for workstream names to prevent text clipping
+        ax.set_yticks(range(len(workstreams)))
+        ax.set_yticklabels([name for name, _, _, _ in workstreams],
+                           fontsize=7.5, fontweight="bold")
+        for i, (_, _, _, color) in enumerate(workstreams):
+            ax.get_yticklabels()[i].set_color(color)
         ax.axvline(x=12, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=60, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(6, len(workstreams)+0.3, "HORIZON 1\n(Year 1)", ha="center", fontsize=10,
                 fontweight="bold", color=self.config.NAVY_HEX)
-        ax.text(36, len(workstreams)+0.3, "HORIZON 2\n(Years 2–5)", ha="center", fontsize=10,
+        ax.text(36, len(workstreams)+0.3, "HORIZON 2\n(Years 2-5)", ha="center", fontsize=10,
                 fontweight="bold", color=self.config.BLUE_HEX)
-        ax.text(90, len(workstreams)+0.3, "HORIZON 3\n(Years 6–10)", ha="center", fontsize=10,
+        ax.text(90, len(workstreams)+0.3, "HORIZON 3\n(Years 6-10)", ha="center", fontsize=10,
                 fontweight="bold", color=self.config.AMBER_HEX)
-        ax.set_yticks([])
         ax.set_xlabel("Months from Inception", fontsize=10)
         ax.set_xlim(0, 122)
         ax.set_ylim(-0.8, len(workstreams)+1.2)
@@ -666,6 +669,7 @@ class ChartGenerator:
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3)
         ax.set_axisbelow(True)
+        fig.subplots_adjust(left=0.30, right=0.95)
         return self._finalize(fig)
 
     def roi_projection(self):
@@ -694,8 +698,8 @@ class ChartGenerator:
                         xytext=(0, 10), ha="center", fontsize=9, color=self.config.DARK_GRAY_HEX)
         ax.set_xlabel("Year", fontsize=11)
         ax.set_ylabel("Cumulative Net Cash Flow ($M)", fontsize=11)
-        ax.set_title("10-Year Cumulative ROI Projection: Credit Risk Mitigation Program",
-                     fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
+        ax.set_title("10-Year Cumulative ROI: Credit Risk Mitigation Program",
+                     fontsize=12, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.legend(loc="upper left", frameon=False)
         ax.grid(True, alpha=0.3)
         ax.set_axisbelow(True)
@@ -751,12 +755,37 @@ class ChartGenerator:
                     height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white",
                     height=0.6, alpha=0.85)
-            ax.text(low_m - 0.3, i, f"${t['low']/1e6:.1f}M", ha="right", va="center", fontsize=9)
-            ax.text(high_m + 0.3, i, f"${t['high']/1e6:.1f}M", ha="left", va="center", fontsize=9)
+        # Render once to establish axes scale before placing labels
+        fig.canvas.draw()
+        pad_pts = 25  # padding from bar end, in points
+        for i, t in enumerate(tornado):
+            low_m = t["low"] / 1_000_000 - base_m
+            high_m = t["high"] / 1_000_000 - base_m
+            bar_range = abs(high_m - low_m)
+            # For very small bars, shift labels further and stagger vertically
+            if bar_range < 3:
+                ax.annotate(f"${t['low']/1e6:.1f}M", xy=(low_m, i),
+                            xytext=(-pad_pts * 2, -6), textcoords="offset points",
+                            ha="right", va="center", fontsize=8.5, fontweight="bold",
+                            clip_on=False)
+                ax.annotate(f"${t['high']/1e6:.1f}M", xy=(high_m, i),
+                            xytext=(pad_pts * 2, 6), textcoords="offset points",
+                            ha="left", va="center", fontsize=8.5, fontweight="bold",
+                            clip_on=False)
+            else:
+                ax.annotate(f"${t['low']/1e6:.1f}M", xy=(low_m, i),
+                            xytext=(-pad_pts, 0), textcoords="offset points",
+                            ha="right", va="center", fontsize=9, fontweight="bold",
+                            clip_on=False)
+                ax.annotate(f"${t['high']/1e6:.1f}M", xy=(high_m, i),
+                            xytext=(pad_pts, 0), textcoords="offset points",
+                            ha="left", va="center", fontsize=9, fontweight="bold",
+                            clip_on=False)
         ax.set_yticks(y_pos)
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
         ax.invert_yaxis()
         ax.axvline(x=0, color=self.config.NAVY_HEX, linewidth=2)
+        ax.margins(x=0.25)
         ax.set_xlabel(f"Change in 10-Year NPV vs. Base Case (${base_m:.1f}M)", fontsize=10)
         ax.set_title("Sensitivity Analysis: Tornado Diagram (NPV Impact)",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
