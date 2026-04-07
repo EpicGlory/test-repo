@@ -654,10 +654,11 @@ class PriceChartGenerator:
 
     # 11. Leading Indicator Scorecard
     def leading_indicators(self):
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(14, 8))
         ax.set_xlim(0, 14); ax.set_ylim(0, 12)
         ax.axis("off")
-        # Category headers
+        # Legend column positions — values will align under these
+        leg_x = [9.5, 11.0, 12.5]  # On Track, Watch, Action Required
         categories = [
             ("PRICE RISK INDICATORS", 0.3, 11, self.config.NAVY_HEX, [
                 ("Cattle-on-Feed (% of year ago)", "98%", "GREEN"),
@@ -678,29 +679,30 @@ class PriceChartGenerator:
                 ("Succession transfers completed (YTD)", "12", "AMBER"),
             ]),
         ]
+        status_map = {"GREEN": 0, "AMBER": 1, "RED": 2}
         status_colors = {"GREEN": self.config.GREEN_HEX, "AMBER": self.config.AMBER_HEX,
                          "RED": self.config.RED_HEX}
         for cat_name, cx, cy, cat_color, indicators in categories:
-            # Center header over the indicator rows (names at x=0.6, values at x=7)
-            ax.text(4.0, cy, cat_name, fontsize=11, fontweight="bold", color=cat_color,
-                    ha="center")
+            ax.text(cx, cy, cat_name, fontsize=11, fontweight="bold", color=cat_color)
             for i, (name, value, status) in enumerate(indicators):
                 row_y = cy - 0.8 - i * 0.65
                 ax.scatter(cx + 0.2, row_y, s=120, color=status_colors[status],
                            edgecolor="white", linewidth=2, zorder=3)
                 ax.text(cx + 0.6, row_y, name, fontsize=9, va="center",
                         color=self.config.DARK_GRAY_HEX)
-                ax.text(7.5, row_y, value, fontsize=9, va="center", fontweight="bold",
+                # Place value under its status column
+                val_x = leg_x[status_map[status]]
+                ax.text(val_x, row_y, value, fontsize=9, va="center", fontweight="bold",
                         color=status_colors[status], ha="center")
         ax.set_title("PLMA Leading Indicator Dashboard (Illustrative — April 2026)",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
-        # Legend — upper right
+        # Legend headers at top — aligned with value columns
         for i, (label, color) in enumerate([("On Track", self.config.GREEN_HEX),
                                              ("Watch", self.config.AMBER_HEX),
                                              ("Action Required", self.config.RED_HEX)]):
-            ax.scatter(10 + i*1.5, 11.8, s=80, color=color, edgecolor="white", linewidth=2)
-            ax.text(10 + i*1.5, 11.35, label, fontsize=7.5, ha="center",
-                    color=self.config.DARK_GRAY_HEX)
+            ax.scatter(leg_x[i], 11.8, s=80, color=color, edgecolor="white", linewidth=2)
+            ax.text(leg_x[i], 11.35, label, fontsize=8, ha="center",
+                    color=self.config.DARK_GRAY_HEX, fontweight="bold")
         return self._finalize(fig)
 
     # 12. Three Horizons Gantt
@@ -746,7 +748,7 @@ class PriceChartGenerator:
         ax.text(90, len(workstreams)+0.3, "HORIZON 3\n(Years 6-10)", ha="center",
                 fontsize=10, fontweight="bold", color=self.config.AMBER_HEX)
         ax.set_yticks([]); ax.set_xlabel("Months from Inception", fontsize=10)
-        ax.set_xlim(0, 165); ax.set_ylim(-0.8, len(workstreams)+1.2)
+        ax.set_xlim(0, 140); ax.set_ylim(-0.8, len(workstreams)+1.2)
         ax.set_title("Price & Market Position Roadmap — Three Horizons",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3); ax.set_axisbelow(True)
@@ -832,19 +834,19 @@ class PriceChartGenerator:
             high_m = t["high"] / 1_000_000 - base_m
             ax.barh(i, low_m, color=self.config.RED_HEX, edgecolor="white", height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white", height=0.6, alpha=0.85)
-        # Render once to establish axes scale before placing labels
-        fig.canvas.draw()
-        pad_pts = 30  # consistent padding from bar end, in points
+        # Place labels using data coordinates to ensure they're always outside bars
+        # Find the range to compute a consistent offset in data units
+        all_lows = [(t["low"]/1e6 - base_m) for t in tornado]
+        all_highs = [(t["high"]/1e6 - base_m) for t in tornado]
+        data_pad = 1.5  # data units of padding from bar end
         for i, t in enumerate(tornado):
             low_m = t["low"] / 1_000_000 - base_m
             high_m = t["high"] / 1_000_000 - base_m
-            # Consistent label placement: always left of red bar, right of green bar
-            ax.annotate(f"${t['low']/1e6:.1f}M", xy=(low_m, i),
-                        xytext=(-pad_pts, 0), textcoords="offset points",
-                        ha="right", va="center", fontsize=9, clip_on=False)
-            ax.annotate(f"${t['high']/1e6:.1f}M", xy=(high_m, i),
-                        xytext=(pad_pts, 0), textcoords="offset points",
-                        ha="left", va="center", fontsize=9, clip_on=False)
+            # Label always placed data_pad units outside the bar end
+            ax.text(low_m - data_pad, i, f"${t['low']/1e6:.1f}M",
+                    ha="right", va="center", fontsize=9, clip_on=False)
+            ax.text(high_m + data_pad, i, f"${t['high']/1e6:.1f}M",
+                    ha="left", va="center", fontsize=9, clip_on=False)
         ax.set_yticks(range(len(tornado)))
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
         ax.invert_yaxis()
