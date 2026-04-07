@@ -344,29 +344,31 @@ class PriceChartGenerator:
     # 1. Cattle Cycle Historical (40 year)
     def cattle_cycle(self):
         years = list(range(1986, 2027))
-        # Stylized fed cattle price ($/cwt)
         prices = [
             62, 67, 73, 78, 82, 76, 72, 74, 69, 63, 60, 65, 60, 63, 68, 72, 71, 80, 85,
             87, 86, 92, 93, 100, 95, 114, 122, 148, 160, 122, 108, 115, 125, 121, 118,
             135, 142, 172, 190, 195, 198
         ]
-        fig, ax = plt.subplots(figsize=(12, 5.5))
+        fig, ax = plt.subplots(figsize=(13, 6))
         ax.plot(years, prices, color=self.config.NAVY_HEX, linewidth=2.5)
         ax.fill_between(years, 0, prices, color=self.config.NAVY_HEX, alpha=0.15)
-        # Cycle annotations
-        cycles = [
-            (1990, 82, 1996, 60, "1990-1996\nCycle Trough"),
-            (2003, 80, 2009, 93, "2003-2009\nCycle"),
-            (2014, 160, 2017, 108, "2014-2017\nPeak-to-Trough\n(-32%)"),
-            (2025, 195, 2027, 198, "2025-2026\nALL-TIME\nHIGH"),
-        ]
-        for _, _, yr, price, label in cycles:
-            ax.annotate(label, xy=(yr, price), fontsize=8, fontweight="bold",
-                        color=self.config.RED_HEX if "ALL-TIME" in label else self.config.DARK_GRAY_HEX,
-                        xytext=(0, 15), textcoords="offset points", ha="center")
-        # Shaded decline zones
         ax.axvspan(1990, 1996, alpha=0.08, color=self.config.RED_HEX)
         ax.axvspan(2014, 2017, alpha=0.08, color=self.config.RED_HEX)
+        # Annotations using explicit data coordinates for reliable placement
+        _bbox = dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.9)
+        ax.text(1993, 42, "1990-1996\nCycle Trough", fontsize=8.5, fontweight="bold",
+                color=self.config.DARK_GRAY_HEX, ha="center", va="center", bbox=_bbox)
+        ax.text(2006, 110, "2003-2009\nCycle", fontsize=8.5, fontweight="bold",
+                color=self.config.DARK_GRAY_HEX, ha="center", va="center", bbox=_bbox)
+        ax.annotate("2014-2017\nPeak-to-Trough\n(-32%)", xy=(2016, 115),
+                    xytext=(2008, 160), fontsize=8.5, fontweight="bold",
+                    color=self.config.RED_HEX, ha="center", va="center", bbox=_bbox,
+                    arrowprops=dict(arrowstyle="->", color=self.config.RED_HEX, lw=1))
+        ax.annotate("2025-2026\nALL-TIME HIGH", xy=(2026, 198),
+                    xytext=(2022, 170), fontsize=8.5, fontweight="bold",
+                    color=self.config.RED_HEX, ha="center", va="center", bbox=_bbox,
+                    arrowprops=dict(arrowstyle="->", color=self.config.RED_HEX, lw=1))
+        ax.set_ylim(0, 215)
         ax.set_title("U.S. Fed Cattle Prices: 40-Year Cycle Analysis (1986–2026)",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.set_ylabel("Fed Cattle Price ($/cwt)", fontsize=10)
@@ -715,13 +717,13 @@ class PriceChartGenerator:
             bar_width = end - start
             ax.barh(i, bar_width, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-            if bar_width < 20:
-                # Place label to the RIGHT of the bar, in matching color
-                ax.text(end + 2, i, name, ha="left", va="center",
-                        fontsize=7, color=color, fontweight="bold")
-            else:
-                ax.text(start + bar_width/2, i, name, ha="center", va="center",
-                        fontsize=7.5, color="white", fontweight="bold")
+        # Use y-axis labels for all workstream names to prevent text clipping
+        ax.set_yticks(range(len(workstreams)))
+        ax.set_yticklabels([name for name, _, _, _ in workstreams],
+                           fontsize=7.5, fontweight="bold")
+        # Color each y-tick label to match its bar color
+        for i, (_, _, _, color) in enumerate(workstreams):
+            ax.get_yticklabels()[i].set_color(color)
         ax.axvline(x=12, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=60, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(6, len(workstreams)+0.3, "HORIZON 1\n(Year 1)", ha="center",
@@ -730,11 +732,12 @@ class PriceChartGenerator:
                 fontsize=10, fontweight="bold", color=self.config.BLUE_HEX)
         ax.text(90, len(workstreams)+0.3, "HORIZON 3\n(Years 6-10)", ha="center",
                 fontsize=10, fontweight="bold", color=self.config.AMBER_HEX)
-        ax.set_yticks([]); ax.set_xlabel("Months from Inception", fontsize=10)
-        ax.set_xlim(0, 170); ax.set_ylim(-0.8, len(workstreams)+1.2)
+        ax.set_xlabel("Months from Inception", fontsize=10)
+        ax.set_xlim(0, 130); ax.set_ylim(-0.8, len(workstreams)+1.2)
         ax.set_title("Price & Market Position Roadmap — Three Horizons",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3); ax.set_axisbelow(True)
+        fig.subplots_adjust(left=0.30, right=0.95)
         return self._finalize(fig)
 
     # 13. Commission Revenue Under 3 Scenarios (line chart)
@@ -754,9 +757,16 @@ class PriceChartGenerator:
         ax.plot(years, mitigated, color=self.config.GREEN_HEX, linewidth=3, marker="o",
                 markersize=7, label="Base case (WITH mitigation)")
         ax.fill_between(years, bear_decline, mitigated, color=self.config.GREEN_HEX, alpha=0.10)
-        ax.annotate("Mitigation\ngap = $8M+/yr\nby Year 5", xy=(2030, 46), xytext=(2028.2, 42),
+        # Arrow points FROM text (xytext) TO gap midpoint (xy) between mitigated & bear lines
+        # Place text in the lower-right area, below all data lines, arrow points UP into the gap
+        gap_mid_y = (mitigated[-2] + bear_decline[-2]) / 2  # midpoint of gap at 2030
+        ax.annotate("Mitigation\ngap = $8M+/yr\nby Year 5",
+                    xy=(2030, gap_mid_y), xytext=(2029.5, 33.5),
                     fontsize=10, fontweight="bold", color=self.config.GREEN_HEX,
-                    arrowprops=dict(arrowstyle="->", color=self.config.GREEN_HEX, lw=1.5))
+                    arrowprops=dict(arrowstyle="->", color=self.config.GREEN_HEX, lw=2,
+                                    connectionstyle="arc3,rad=-0.2"),
+                    bbox=dict(boxstyle="round,pad=0.4", fc="white", ec=self.config.GREEN_HEX,
+                              alpha=0.95, lw=1.0))
         ax.set_title("Commission Revenue Trajectories With & Without Mitigation",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.set_ylabel("Annual Commission Revenue ($M)", fontsize=10)
@@ -790,9 +800,11 @@ class PriceChartGenerator:
             ax.annotate(f"${y:.1f}M", (x, y), textcoords="offset points",
                         xytext=(0, 10), ha="center", fontsize=9, color=self.config.DARK_GRAY_HEX)
         ax.set_xlabel("Year", fontsize=11); ax.set_ylabel("Cumulative Net Cash Flow ($M)", fontsize=11)
-        ax.set_title("10-Year Cumulative ROI: Price & Market Position Program",
-                     fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
-        ax.legend(loc="upper left", frameon=False)
+        ax.set_title("10-Year Cumulative ROI:\nPrice & Market Position Program",
+                     fontsize=12, fontweight="bold", color=self.config.NAVY_HEX, pad=18,
+                     linespacing=1.3)
+        ax.legend(loc="upper left", frameon=True, fontsize=9,
+                  facecolor="white", edgecolor="none", framealpha=0.9)
         ax.grid(True, alpha=0.3); ax.set_axisbelow(True)
         return self._finalize(fig)
 
@@ -807,18 +819,33 @@ class PriceChartGenerator:
             high_m = t["high"] / 1_000_000 - base_m
             ax.barh(i, low_m, color=self.config.RED_HEX, edgecolor="white", height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white", height=0.6, alpha=0.85)
-            # Place labels well outside bars; use absolute position for small bars
-            low_offset = min(low_m - 1.5, -1.5)
-            high_offset = max(high_m + 1.5, 1.5)
-            ax.text(low_offset, i, f"${t['low']/1e6:.1f}M", ha="right", va="center",
-                    fontsize=9, clip_on=False)
-            ax.text(high_offset, i, f"${t['high']/1e6:.1f}M", ha="left", va="center",
-                    fontsize=9, clip_on=False)
+        # Render once to establish axes scale before placing labels
+        fig.canvas.draw()
+        pad_pts = 25  # padding from bar end, in points
+        for i, t in enumerate(tornado):
+            low_m = t["low"] / 1_000_000 - base_m
+            high_m = t["high"] / 1_000_000 - base_m
+            bar_range = abs(high_m - low_m)
+            # For very small bars, shift labels further and stagger vertically
+            if bar_range < 3:
+                ax.annotate(f"${t['low']/1e6:.1f}M", xy=(low_m, i),
+                            xytext=(-pad_pts * 2, -6), textcoords="offset points",
+                            ha="right", va="center", fontsize=8.5, clip_on=False)
+                ax.annotate(f"${t['high']/1e6:.1f}M", xy=(high_m, i),
+                            xytext=(pad_pts * 2, 6), textcoords="offset points",
+                            ha="left", va="center", fontsize=8.5, clip_on=False)
+            else:
+                ax.annotate(f"${t['low']/1e6:.1f}M", xy=(low_m, i),
+                            xytext=(-pad_pts, 0), textcoords="offset points",
+                            ha="right", va="center", fontsize=9, clip_on=False)
+                ax.annotate(f"${t['high']/1e6:.1f}M", xy=(high_m, i),
+                            xytext=(pad_pts, 0), textcoords="offset points",
+                            ha="left", va="center", fontsize=9, clip_on=False)
         ax.set_yticks(range(len(tornado)))
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
         ax.invert_yaxis()
         ax.axvline(x=0, color=self.config.NAVY_HEX, linewidth=2)
-        ax.margins(x=0.15)
+        ax.margins(x=0.25)
         ax.set_xlabel(f"Change in 10-Year NPV vs. Base (${base_m:.1f}M)", fontsize=10)
         ax.set_title("Sensitivity Tornado — Price & Market Position Program NPV",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
