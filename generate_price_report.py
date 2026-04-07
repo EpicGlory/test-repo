@@ -121,8 +121,8 @@ class PriceMarketModel:
         self.transaction_volume = 3_200_000_000
         self.commission_rate = 0.01875
         self.commission_revenue = self.transaction_volume * self.commission_rate  # $60M
-        self.cattle_share = 0.72  # 72% of volume
-        self.pork_share = 0.28
+        self.cattle_share = 0.95  # 95% of volume
+        self.lamb_share = 0.05   # 5% lamb (immaterial)
 
         # Company-owned cattle inventory
         self.inventory_value = 20_000_000  # $20M estimated
@@ -162,11 +162,10 @@ class PriceMarketModel:
         results = []
         for decline in [0.10, 0.20, 0.30, 0.40]:
             cattle_vol = self.transaction_volume * self.cattle_share
-            pork_vol = self.transaction_volume * self.pork_share
-            # Cattle decline
+            lamb_vol = self.transaction_volume * self.lamb_share
+            # Cattle decline; lamb holds (immaterial)
             new_cattle = cattle_vol * (1 - decline)
-            # Pork holds (only cattle is at ATH)
-            new_total = new_cattle + pork_vol
+            new_total = new_cattle + lamb_vol
             new_rev = new_total * self.commission_rate
             loss = self.commission_revenue - new_rev
             pct = loss / self.commission_revenue
@@ -443,33 +442,7 @@ class PriceChartGenerator:
         ax.set_ylim(0, 70)
         return self._finalize(fig)
 
-    # 4. Lean Hog Price & Margin
-    def hog_price_margin(self):
-        years = list(range(2018, 2027))
-        lean_hog = [55, 62, 48, 75, 95, 72, 65, 70, 68]
-        producer_margin = [8, 12, -5, 28, 35, 5, -8, 2, -3]
-        fig, ax1 = plt.subplots(figsize=(9, 5))
-        bars = ax1.bar(years, lean_hog, color=self.config.NAVY_HEX, edgecolor="white",
-                       width=0.5, alpha=0.85, label="Lean Hog Price ($/cwt)")
-        ax1.set_ylabel("Lean Hog Price ($/cwt)", fontsize=10, color=self.config.NAVY_HEX)
-        ax1.tick_params(axis="y", labelcolor=self.config.NAVY_HEX)
-        ax2 = ax1.twinx()
-        ax2.plot(years, producer_margin, color=self.config.RED_HEX, linewidth=3,
-                 marker="o", markersize=8, label="Pork Producer Margin ($/head)")
-        ax2.axhline(y=0, color=self.config.DARK_GRAY_HEX, linewidth=0.8, linestyle="--")
-        ax2.set_ylabel("Producer Margin ($/head)", fontsize=10, color=self.config.RED_HEX)
-        ax2.tick_params(axis="y", labelcolor=self.config.RED_HEX)
-        ax2.spines["top"].set_visible(False)
-        ax1.set_title("Lean Hog Prices & Pork Producer Margins (2018–2026)",
-                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
-        l1, lab1 = ax1.get_legend_handles_labels()
-        l2, lab2 = ax2.get_legend_handles_labels()
-        ax1.legend(l1+l2, lab1+lab2, loc="upper left", frameon=False, fontsize=9)
-        ax1.grid(True, axis="y", alpha=0.3)
-        ax1.set_axisbelow(True)
-        ax1.text(0.01, -0.14, "Source: CME Group, USDA ERS Livestock & Meat Domestic Data.",
-                 transform=ax1.transAxes, fontsize=8, color=self.config.MID_GRAY_HEX, style="italic")
-        return self._finalize(fig)
+
 
     # 5. Market Share Erosion Scenarios
     def market_share_erosion(self):
@@ -656,7 +629,7 @@ class PriceChartGenerator:
                  "Commodity prices", "Federal Reserve policy",
                  "Weather & drought", "Packer consolidation",
                  "Regulatory changes", "Demographic trends",
-                 "Trade policy / tariffs", "Disease outbreaks (ASF)"]),
+                 "Trade policy / tariffs", "Disease outbreaks"]),
         ]
         for x, y, w, h, fill, title, tcolor, items in zones:
             color = fill if fill.startswith("#") else f"#{fill}"
@@ -715,8 +688,8 @@ class PriceChartGenerator:
         for i, (label, color) in enumerate([("On Track", self.config.GREEN_HEX),
                                              ("Watch", self.config.AMBER_HEX),
                                              ("Action Required", self.config.RED_HEX)]):
-            ax.scatter(10 + i*0.8, 11.5, s=100, color=color, edgecolor="white", linewidth=2)
-            ax.text(10 + i*0.8, 11.0, label, fontsize=8, ha="center",
+            ax.scatter(9 + i*1.5, 11.5, s=100, color=color, edgecolor="white", linewidth=2)
+            ax.text(9 + i*1.5, 11.0, label, fontsize=8, ha="center",
                     color=self.config.DARK_GRAY_HEX)
         return self._finalize(fig)
 
@@ -739,10 +712,15 @@ class PriceChartGenerator:
         ]
         fig, ax = plt.subplots(figsize=(12, 6.5))
         for i, (name, start, end, color) in enumerate(workstreams):
-            ax.barh(i, end-start, left=start, color=color, edgecolor="white",
+            bar_width = end - start
+            ax.barh(i, bar_width, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-            ax.text(start+(end-start)/2, i, name, ha="center", va="center",
-                    fontsize=8, color="white", fontweight="bold")
+            if bar_width < 15:
+                ax.text(end + 1, i, name, ha="left", va="center",
+                        fontsize=7.5, color=color, fontweight="bold", clip_on=False)
+            else:
+                ax.text(start + bar_width/2, i, name, ha="center", va="center",
+                        fontsize=7.5, color="white", fontweight="bold")
         ax.axvline(x=12, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=60, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(6, len(workstreams)+0.3, "HORIZON 1\n(Year 1)", ha="center",
@@ -775,9 +753,9 @@ class PriceChartGenerator:
         ax.plot(years, mitigated, color=self.config.GREEN_HEX, linewidth=3, marker="o",
                 markersize=7, label="Base case (WITH mitigation)")
         ax.fill_between(years, bear_decline, mitigated, color=self.config.GREEN_HEX, alpha=0.10)
-        ax.annotate("Mitigation\ngap = $8M+/yr\nby Year 5", xy=(2030, 51), xytext=(2029, 58),
+        ax.annotate("Mitigation\ngap = $8M+/yr\nby Year 5", xy=(2030, 46), xytext=(2028.2, 42),
                     fontsize=10, fontweight="bold", color=self.config.GREEN_HEX,
-                    arrowprops=dict(arrowstyle="->", color=self.config.GREEN_HEX))
+                    arrowprops=dict(arrowstyle="->", color=self.config.GREEN_HEX, lw=1.5))
         ax.set_title("Commission Revenue Trajectories With & Without Mitigation",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.set_ylabel("Annual Commission Revenue ($M)", fontsize=10)
@@ -828,12 +806,15 @@ class PriceChartGenerator:
             high_m = t["high"] / 1_000_000 - base_m
             ax.barh(i, low_m, color=self.config.RED_HEX, edgecolor="white", height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white", height=0.6, alpha=0.85)
-            ax.text(low_m-0.4, i, f"${t['low']/1e6:.1f}M", ha="right", va="center", fontsize=9)
-            ax.text(high_m+0.4, i, f"${t['high']/1e6:.1f}M", ha="left", va="center", fontsize=9)
+            ax.text(low_m-1.2, i, f"${t['low']/1e6:.1f}M", ha="right", va="center",
+                    fontsize=9, clip_on=False)
+            ax.text(high_m+1.2, i, f"${t['high']/1e6:.1f}M", ha="left", va="center",
+                    fontsize=9, clip_on=False)
         ax.set_yticks(range(len(tornado)))
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
         ax.invert_yaxis()
         ax.axvline(x=0, color=self.config.NAVY_HEX, linewidth=2)
+        ax.margins(x=0.15)
         ax.set_xlabel(f"Change in 10-Year NPV vs. Base (${base_m:.1f}M)", fontsize=10)
         ax.set_title("Sensitivity Tornado — Price & Market Position Program NPV",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
@@ -1054,17 +1035,17 @@ class DocumentBuilder:
         self.doc.add_heading("Table of Contents", level=1)
         entries = [
             ("1. Executive Summary", "3"), ("2. Price Risk — Cattle", "6"),
-            ("3. Price Risk — Pork", "13"), ("4. Market Share Risk Assessment", "17"),
-            ("5. Generational Succession Deep Dive", "24"),
-            ("6. Controllable vs. Uncontrollable Framework", "31"),
-            ("7. Leading Indicators Dashboard", "34"),
-            ("8. Mitigation Strategy & Implementation Roadmap", "38"),
-            ("9. Financial Model", "44"), ("10. Conclusion & Next Steps", "49"),
-            ("Appendix A: Cattle Cycle Data Tables", "51"),
-            ("Appendix B: Commission Sensitivity Detail", "53"),
-            ("Appendix C: Generational Demographics", "55"),
-            ("Appendix D: Methodology & Assumptions", "57"),
-            ("Appendix E: Glossary", "59"), ("Appendix F: Citations", "61"),
+            ("3. Market Share Risk Assessment", "13"),
+            ("4. Generational Succession Deep Dive", "20"),
+            ("5. Controllable vs. Uncontrollable Framework", "27"),
+            ("6. Leading Indicators Dashboard", "30"),
+            ("7. Mitigation Strategy & Implementation Roadmap", "34"),
+            ("8. Financial Model", "40"), ("9. Conclusion & Next Steps", "45"),
+            ("Appendix A: Cattle Cycle Data Tables", "47"),
+            ("Appendix B: Commission Sensitivity Detail", "49"),
+            ("Appendix C: Generational Demographics", "51"),
+            ("Appendix D: Methodology & Assumptions", "53"),
+            ("Appendix E: Glossary", "55"), ("Appendix F: Citations", "57"),
         ]
         for title, page in entries:
             p = self.doc.add_paragraph()
@@ -1082,7 +1063,7 @@ class DocumentBuilder:
             "U.S. cattle prices are at all-time nominal highs — fed cattle averaging ~$198/cwt in Q1 2026. "
             "The cyclical nature of the cattle market makes a correction not a question of IF but WHEN and "
             "HOW MUCH. PLMA's commission revenue — tied directly to livestock transaction value — faces "
-            "downside exposure of $4.3M to $13.0M annually under a 10-30% price correction. Simultaneously, "
+            "downside exposure of $5.7M to $17.1M annually under a 10-30% price correction. Simultaneously, "
             "PLMA's market share is under attack from four directions: digital marketplace disruptors, "
             "industry consolidation, direct-to-packer disintermediation, and regional competitive shifts. "
             "And the demographic cliff — average rancher age exceeding 58 — means PLMA's existing "
@@ -1094,7 +1075,7 @@ class DocumentBuilder:
             "in the 2026-2028 window.")
         self._bullet_lead("Commission revenue is structurally exposed to price declines.",
             "As a percentage-of-sale marketer, PLMA's revenue declines proportionally with cattle prices. "
-            "A 20% cattle price decline erodes ~$8.6M (14%) of annual commission revenue. "
+            "A 20% cattle price decline erodes ~$11.4M (19%) of annual commission revenue. "
             "This is not a risk PLMA can fully eliminate, but it CAN be substantially mitigated.")
         self._bullet_lead("Company-owned cattle inventory creates additional balance sheet exposure.",
             "An estimated $20M in company-owned inventory faces $4M mark-to-market loss in a 20% decline "
@@ -1113,7 +1094,7 @@ class DocumentBuilder:
             "diversification — and these actions generate ~$26M in 10-year NPV.")
         self._h2("1.2 Financial Impact Summary")
         self._table(["Metric", "Value"], [
-            ["Commission revenue at risk (20% cattle decline)", "$8.6M/year"],
+            ["Commission revenue at risk (20% cattle decline)", "$11.4M/year"],
             ["Inventory mark-to-market (20% decline, unhedged)", "$4.0M"],
             ["Market share erosion cost (moderate, Year 5)", "$12.0M/year"],
             ["Year 1 Mitigation Investment", "$2.80M"],
@@ -1161,9 +1142,9 @@ class DocumentBuilder:
         self._body("PLMA's commission revenue is directly proportional to the dollar value of "
             "livestock sold. At an estimated 1.875% average commission rate on $3.2B in annual "
             "transaction volume, PLMA generates ~$60M in commission revenue. Cattle transactions "
-            "represent ~72% of this volume.")
+            "represent ~95% of this volume.")
         self._chart(self.charts.commission_sensitivity_waterfall(),
-                    caption="A 20% cattle price decline erodes $8.6M (14%) of annual commission revenue.")
+                    caption="A 20% cattle price decline erodes $11.4M (19%) of annual commission revenue.")
         sens = self.model.commission_sensitivity()
         sens_rows = [[f"{int(s['decline']*100)}%", f"${s['revenue_loss']/1e6:.1f}M",
                       f"{s['pct_of_revenue']*100:.1f}%", f"${s['remaining_revenue']/1e6:.1f}M"]
@@ -1191,60 +1172,24 @@ class DocumentBuilder:
             "footprint, basis tends to widen during periods of tight packer capacity (positive for "
             "sellers) but can compress sharply during seasonal lows or regional weather events.")
 
-    # ============ SECTION 3: PORK PRICE RISK ============
-    def _add_section_3_pork(self):
-        self._h1("3. Price Risk — Pork")
-        self._body("While cattle dominate PLMA's transaction volume (~72%), pork represents ~28% and "
-            "carries distinct risk dynamics: different supply cycles, export dependency, and a "
-            "catastrophic tail risk (ASF) not present in cattle.")
-        self._h2("3.1 Pork Market Structure")
-        p = self._body("The U.S. pork industry operates on shorter production cycles than cattle "
-            "(~10 months farrow-to-market vs. ~30 months in cow-calf-to-fed). This means supply "
-            "can adjust faster, but it also means overproduction cycles are steeper and more "
-            "volatile. The 2021-2022 expansion — driven by strong domestic demand and high prices — "
-            "has produced a supply glut entering 2026, with lean hog prices declining from $95/cwt "
-            "(2022 peak) to ~$68/cwt (Q1 2026).")
-        self._cite(p, 7)
-        self._chart(self.charts.hog_price_margin(),
-                    caption="Pork producer margins have swung from +$35/head (2022) to -$3/head (2026) — directly stressing PLMA's pork buyer base.")
-        self._h2("3.2 ASF Tail Risk")
-        self._callout("African Swine Fever — The $15B+ Tail Risk",
-            "ASF has not reached U.S. soil, but its confirmed presence in the Dominican Republic (2021) "
-            "and Haiti makes a Caribbean-to-mainland pathway credible. A confirmed U.S. case would "
-            "immediately halt all pork exports (~$8B/year, ~25% of production), collapse domestic "
-            "prices 25-40% within 72 hours, and trigger mass depopulation of affected herds. "
-            "For PLMA's pork segment: commission revenue drops $4-6M annually; counterparty losses "
-            "from producer bankruptcies compound on top.", kind="warning")
-        self._h2("3.3 Packer Margin Dynamics")
-        p = self._body("Pork packing is highly consolidated (4 firms control ~66% of slaughter), "
-            "creating asymmetric price-setting power. In a falling market, packers capture margin "
-            "by widening the spread between live hog purchases and boxed pork cuts — pressuring "
-            "producers from both sides.")
-        self._cite(p, 10)
-        self._h2("3.4 Pork Commission Sensitivity")
-        self._body("Pork transactions represent ~28% of PLMA's volume (~$896M). At 1.875% commission, "
-            "the pork segment generates ~$16.8M in annual revenue.")
-        self._table(["Pork Price Decline", "Revenue Impact", "% of Total Revenue"],
-            [["10%", "-$1.7M", "-2.8%"],
-             ["20%", "-$3.4M", "-5.6%"],
-             ["30% (ASF scenario)", "-$5.0M", "-8.4%"]], col_widths=[1.8, 1.5, 1.5])
-
-    # ============ SECTION 4: MARKET SHARE ============
-    def _add_section_4_market_share(self):
-        self._h1("4. Market Share Risk Assessment")
+    # ============ SECTION 3: MARKET SHARE ============
+    def _add_section_3_market_share(self):
+        self._h1("3. Market Share Risk Assessment")
         self._body("Market share erosion is a slow, compounding threat that is more dangerous than "
             "any single price cycle. A cooperative that loses 4% of volume per year for 5 years "
             "has permanently impaired its cost structure, bargaining position, and relevance.")
-        self._h2("4.1 PLMA's Market Position")
-        p = self._body("PLMA is one of the largest livestock marketing cooperatives in the U.S., "
-            "with an estimated 4-6% share of total U.S. livestock marketing transaction volume "
-            "(~$60B total). The cooperative model — pooling producer volume for market access, "
-            "price discovery, and buyer reach — has been the industry standard for over a century. "
-            "But the standard is under attack.")
+        self._h2("3.1 PLMA's Market Position")
+        p = self._body("PLMA is a member-owned, non-stock cooperative established in 1935 and "
+            "headquartered in Omaha, Nebraska, with offices in Sioux City (IA), North Salt Lake (UT), "
+            "and Madera (CA). Operating three divisions — Marketing, Commodities (Producers Commodities "
+            "LLC), and Credit (Producers Livestock Credit Corporation) — PLMA is an industry leader in "
+            "livestock marketing throughout the Western United States, with an estimated 4-6% share "
+            "of total U.S. livestock marketing transaction volume (~$60B total). The cooperative model "
+            "has been the industry standard for over a century. But the standard is under attack.")
         self._cite(p, 17)
         self._chart(self.charts.market_share_erosion(),
                     caption="Under moderate erosion (4%/yr), PLMA loses 20% of volume by 2031 — $12M/yr in commission revenue.")
-        self._h2("4.2 Digital Marketplace Disruption")
+        self._h2("3.2 Digital Marketplace Disruption")
         self._callout("Connection to Report #2",
             "Report #2 (Emerging Technology Strategy) recommended a digital auction platform as an "
             "INVEST NOW priority (Section 5.5). The market share defense economics in this section "
@@ -1258,13 +1203,13 @@ class DocumentBuilder:
             "DVAuction, and various regional online platforms are accelerating share capture.")
         self._chart(self.charts.auction_consolidation(),
                     caption="Physical auctions declined 52% (1,200 → 570) since 2000 while digital share grew from 0% to 32%.")
-        self._h2("4.3 Industry Consolidation")
+        self._h2("3.3 Industry Consolidation")
         self._body("The livestock marketing industry is consolidating at both the auction level "
             "(closures) and the cooperative level (mergers). Smaller regional cooperatives lack scale "
             "to invest in technology, compliance, and member services. This creates both a threat "
             "(larger competitors absorbing PLMA's members) and an opportunity (PLMA absorbing smaller "
             "cooperatives).")
-        self._h2("4.4 Disintermediation")
+        self._h2("3.4 Disintermediation")
         self._chart(self.charts.disintermediation(),
                     caption="Four pathways bypass PLMA: direct-to-packer, digital marketplace, coop-to-coop, and fintech P2P.")
         self._body("Disintermediation — producers selling directly to packers or feedlots, bypassing "
@@ -1272,20 +1217,20 @@ class DocumentBuilder:
             "contracting directly with large feedlots), (ii) formula pricing that removes the need "
             "for auction price discovery, (iii) producer-owned digital platforms, and (iv) "
             "relationship consolidation as the industry concentrates.")
-        self._h2("4.5 Regional Competition")
+        self._h2("3.5 Regional Competition")
         self._body("Cattle production geography is shifting: drought has accelerated herd liquidation "
             "in the Southern Plains, while the Northern Plains and Corn Belt have gained share. "
             "Feedlot concentration in the Texas Panhandle, SW Kansas, and NE Colorado/SW Nebraska "
             "creates regional pricing power dynamics that affect PLMA's footprint differently "
             "depending on its geographic exposure.")
 
-    # ============ SECTION 5: GENERATIONAL SUCCESSION ============
-    def _add_section_5_succession(self):
-        self._h1("5. Generational Succession Deep Dive")
+    # ============ SECTION 4: GENERATIONAL SUCCESSION ============
+    def _add_section_4_succession(self):
+        self._h1("4. Generational Succession Deep Dive")
         self._body("This section addresses the single most underappreciated strategic risk facing "
             "PLMA: the aging of its producer member base and the failure to systematically capture "
             "the next generation of livestock producers.")
-        self._h2("5.1 The Demographic Crisis")
+        self._h2("4.1 The Demographic Crisis")
         p = self._body("The average age of U.S. farm operators reached 58.1 years in the 2022 Census "
             "of Agriculture, up from 56.3 in 2012. More alarmingly, the <35 age cohort has shrunk "
             "from 5.6% to 4.9% of all operators, while the 75+ cohort grew from 9.7% to 16.0%. "
@@ -1293,7 +1238,7 @@ class DocumentBuilder:
         self._cite(p, 14)
         self._chart(self.charts.rancher_age_distribution(),
                     caption="The demographic cliff: 53% of operators projected 65+ by 2035; <35 cohort shrinking.")
-        self._h2("5.2 Estate Planning & Relationship Transfer Economics")
+        self._h2("4.2 Estate Planning & Relationship Transfer Economics")
         self._body("When a rancher passes away or exits the business, the cooperative relationship "
             "does not automatically transfer to the heir or buyer. Industry data suggests PLMA "
             "retains only ~29% of relationships through generational transfer — losing 71% to "
@@ -1306,55 +1251,55 @@ class DocumentBuilder:
             "relationship attrition cost: $2.1-5.0M in future revenue erosion.", kind="finding")
         self._chart(self.charts.relationship_funnel(),
                     caption="PLMA's relationship funnel reveals the largest leak at succession transfer (71% attrition).")
-        self._h2("5.3 The 'Lost Generation' Gap")
+        self._h2("4.3 The 'Lost Generation' Gap")
         self._body("The 35-50 age cohort — the generation that should be PLMA's emerging core "
             "membership — is underrepresented. These producers grew up digital, expect mobile-first "
             "experiences, make data-driven decisions, and are less loyal to 'the way it's always "
             "been done.' They are also the most likely to use direct-sale or digital auction "
             "platforms. If PLMA does not actively engage this cohort, it cedes them to competitors.")
-        self._h2("5.4 Young Rancher Acquisition Strategy")
+        self._h2("4.4 Young Rancher Acquisition Strategy")
         self._body("Next-generation producers want different things from a cooperative:")
         self._bullet_lead("Digital experience:", "Mobile app, online auctions, real-time market data, digital documentation.")
         self._bullet_lead("Advisory services:", "Risk management education, hedging advisory, credit access facilitation, financial literacy.")
         self._bullet_lead("Flexibility:", "Lower minimum volumes, flexible commission structures, trial memberships.")
         self._bullet_lead("Community:", "Peer networks, mentorship connections, industry events, social media presence.")
         self._bullet_lead("Values alignment:", "Sustainability practices, animal welfare, cooperative governance voice.")
-        self._h2("5.5 Mentorship & Ambassador Programs")
+        self._h2("4.5 Mentorship & Ambassador Programs")
         self._body("The most effective young rancher acquisition channel is referral from an existing "
             "trusted member. A formal Mentorship/Ambassador Program pairs experienced PLMA members "
             "with beginning producers in their region. Ambassadors receive modest incentives "
             "(reduced commission tiers, recognition) for successful referrals that convert to "
             "active members.")
-        self._h2("5.6 Financial Products for Beginning Producers")
+        self._h2("4.6 Financial Products for Beginning Producers")
         self._body("Beginning ranchers face acute capital constraints: limited equity, thin credit "
             "history, high land/cattle costs. PLMA can facilitate (not originate) access to:")
         self._bullet("FSA Beginning Farmer and Rancher loans (guaranteed lending programs)")
         self._bullet("Farm Credit System programs designed for beginning operations")
         self._bullet("Risk management education (hedging basics, crop insurance for feed)")
         self._bullet("Cooperative credit accommodation (extended terms for first-year members)")
-        self._h2("5.7 Land-Grant University & Extension Partnerships")
+        self._h2("4.7 Land-Grant University & Extension Partnerships")
         p = self._body("Partnerships with land-grant universities (KSU, TAMU, UNL, SDSU, etc.) and "
             "cooperative extension services create a pipeline of young producers who encounter PLMA "
             "as part of their education — at livestock judging events, extension workshops, "
             "internship programs, and student cooperative competitions.")
         self._cite(p, 26)
 
-    # ============ SECTION 6: CONTROLLABLE vs UNCONTROLLABLE ============
-    def _add_section_6_control(self):
-        self._h1("6. Controllable vs. Uncontrollable Framework")
+    # ============ SECTION 5: CONTROLLABLE vs UNCONTROLLABLE ============
+    def _add_section_5_control(self):
+        self._h1("5. Controllable vs. Uncontrollable Framework")
         self._body("A fundamental principle of risk management — adapted here from Covey's Circle of "
             "Influence model for enterprise strategy — is distinguishing between factors PLMA can "
             "control (direct action), influence (indirect leverage), and only monitor (cannot change).")
         self._chart(self.charts.control_framework(),
                     caption="PLMA's strategy should focus energy on the Control zone, invest in the Influence zone, and build monitoring for the rest.")
-        self._h2("6.1 What PLMA Cannot Control")
+        self._h2("5.1 What PLMA Cannot Control")
         self._body("These factors shape the operating environment but are beyond PLMA's direct action:")
-        self._bullet_lead("Commodity prices:", "Cattle and hog prices are set by global supply/demand. PLMA can hedge exposure but cannot influence the price level.")
+        self._bullet_lead("Commodity prices:", "Cattle prices are set by global supply/demand. PLMA can hedge exposure but cannot influence the price level.")
         self._bullet_lead("Federal Reserve policy:", "Interest rates affect buyer leverage, working capital cost, and farmland values. Monitor and plan; cannot change.")
         self._bullet_lead("Weather and drought:", "Regional weather patterns drive herd liquidation, basis volatility, and production migration. Monitor and diversify geographically.")
         self._bullet_lead("Packer consolidation:", "Big-4 concentration is a regulatory and antitrust issue. PLMA can advocate but cannot reverse market structure.")
         self._bullet_lead("Demographic trends:", "The aging of the rancher population is a national phenomenon. PLMA can capture the next generation but cannot reverse the trend.")
-        self._h2("6.2 What PLMA Can Control")
+        self._h2("5.2 What PLMA Can Control")
         self._body("These are the high-leverage actions that form the core of the mitigation strategy:")
         self._bullet_lead("Hedging program:", "Direct action to hedge company-owned cattle and overlay member risk advisory.")
         self._bullet_lead("Commission structure:", "Reform from pure %-of-sale to blended model (floor/ceiling, fee-for-service, advisory tiers).")
@@ -1363,31 +1308,30 @@ class DocumentBuilder:
         self._bullet_lead("Young rancher outreach:", "Formal program, university partnerships, mentorship network.")
         self._bullet_lead("Geographic expansion:", "Enter underserved regions to diversify volume concentration.")
         self._bullet_lead("Cost structure:", "Operating leverage — ensure fixed costs are right-sized for a 20% volume decline scenario.")
-        self._h2("6.3 What PLMA Can Influence")
+        self._h2("5.3 What PLMA Can Influence")
         self._body("These factors are not fully controllable but respond to sustained effort:")
         self._bullet_lead("Buyer payment behavior:", "Credit terms, incentives, and monitoring improve payment velocity.")
         self._bullet_lead("Industry advocacy:", "Through LMA and NCBA, PLMA can shape P&SA enforcement, market transparency rules, and beginning farmer programs.")
         self._bullet_lead("Cooperative partnerships:", "Joint ventures, federated structures, and mutual aid agreements with peer cooperatives reduce isolation.")
         self._bullet_lead("Talent pipeline:", "University partnerships and employer brand investment attract talent over time.")
 
-    # ============ SECTION 7: LEADING INDICATORS ============
-    def _add_section_7_indicators(self):
-        self._h1("7. Leading Indicators Dashboard")
+    # ============ SECTION 6: LEADING INDICATORS ============
+    def _add_section_6_indicators(self):
+        self._h1("6. Leading Indicators Dashboard")
         self._body("Effective risk management requires systematic monitoring of leading indicators — "
             "not just lagging outcomes. This section defines the key metrics PLMA should track "
             "weekly/monthly across price, market share, and generational dimensions.")
         self._chart(self.charts.leading_indicators(),
                     caption="Illustrative dashboard showing current status. Amber/red indicators require escalation per governance protocols.")
-        self._h2("7.1 Price Risk Indicators")
+        self._h2("6.1 Price Risk Indicators")
         self._table(["Indicator", "Frequency", "Signal", "Action Trigger"], [
             ["Cattle-on-Feed report", "Monthly", "YoY placement trends", ">105% of year-ago triggers review"],
             ["Placement/Marketing ratio", "Monthly", "Supply pipeline buildup", ">1.10 for 3 consecutive months"],
             ["CME futures curve structure", "Weekly", "Contango vs. backwardation", "Shift to contango = bearish signal"],
             ["Feeder cattle basis", "Weekly", "Regional price dislocation", ">$5 deviation from 5yr avg"],
             ["Packer capacity utilization", "Monthly", "Processing bottleneck", "<85% signals margin pressure"],
-            ["Hog-corn price ratio", "Monthly", "Pork profitability proxy", "<20 signals producer stress"],
         ], col_widths=[1.8, 1.0, 1.5, 2.0])
-        self._h2("7.2 Market Share Indicators")
+        self._h2("6.2 Market Share Indicators")
         self._table(["Indicator", "Frequency", "Signal", "Action Trigger"], [
             ["Transaction volume (YTD vs plan)", "Monthly", "Volume trajectory", ">5% below plan for 2 months"],
             ["Member retention (12m rolling)", "Monthly", "Relationship health", "<90% triggers retention campaign"],
@@ -1395,7 +1339,7 @@ class DocumentBuilder:
             ["Digital competitor penetration", "Quarterly", "Disintermediation speed", ">35% triggers defensive action"],
             ["Top-10 member concentration", "Quarterly", "Dependency risk", ">40% of volume"],
         ], col_widths=[1.8, 1.0, 1.5, 2.0])
-        self._h2("7.3 Generational Indicators")
+        self._h2("6.3 Generational Indicators")
         self._table(["Indicator", "Frequency", "Signal", "Action Trigger"], [
             ["Average member age", "Annually", "Aging trajectory", ">60 triggers acceleration"],
             ["Young Rancher Program enrollment", "Monthly", "Pipeline health", "<100/yr by Year 2"],
@@ -1403,14 +1347,14 @@ class DocumentBuilder:
             ["University partnership engagement", "Quarterly", "Pipeline development", "<3 active partnerships"],
         ], col_widths=[1.8, 1.0, 1.5, 2.0])
 
-    # ============ SECTION 8: MITIGATION STRATEGY ============
-    def _add_section_8_mitigation(self):
-        self._h1("8. Mitigation Strategy & Implementation Roadmap")
+    # ============ SECTION 7: MITIGATION STRATEGY ============
+    def _add_section_7_mitigation(self):
+        self._h1("7. Mitigation Strategy & Implementation Roadmap")
         self._body("The mitigation strategy addresses all three risk pillars — price, market share, "
             "and generational succession — through a unified Three Horizons framework consistent "
             "with Reports #1 and #2.")
-        self._h2("8.1 Price Risk Mitigation Toolkit")
-        self._h3("8.1.1 Hedging Overlay on Company-Owned Cattle")
+        self._h2("7.1 Price Risk Mitigation Toolkit")
+        self._h3("7.1.1 Hedging Overlay on Company-Owned Cattle")
         self._callout("Connection to Report #1",
             "Report #1 recommended a hedging program for the consignment-to-settlement window "
             "(Section 6.2). This report extends that program to cover company-owned inventory "
@@ -1420,35 +1364,35 @@ class DocumentBuilder:
         self._body("Implement systematic hedge coverage of 60-80% of company-owned cattle inventory. "
             "Use CME live cattle and feeder cattle futures with option overlays for basis protection. "
             "Target: reduce mark-to-market exposure from $4M (unhedged) to <$1M in a 20% decline.")
-        self._h3("8.1.2 Commission Structure Reform")
+        self._h3("7.1.2 Commission Structure Reform")
         self._body("Move from pure percentage-of-sale commission to a blended model:")
         self._bullet_lead("Floor commission:", "Minimum per-head fee that provides revenue stability even in price declines.")
         self._bullet_lead("Tiered commission:", "Lower % rate on high-value cattle (incentivizes volume at peak prices).")
         self._bullet_lead("Fee-for-service:", "Unbundled advisory, hedging, and credit facilitation services priced separately.")
         self._bullet_lead("Subscription model:", "Fixed annual member fee for base services + variable commission on transactions.")
-        self._h3("8.1.3 Working Capital Stress Testing")
+        self._h3("7.1.3 Working Capital Stress Testing")
         self._body("Conduct quarterly stress tests of PLMA's working capital against three scenarios "
             "(10%, 20%, 30% price decline) to ensure liquidity is adequate to sustain operations "
             "during a 12-24 month correction period.")
-        self._h2("8.2 Market Share Defense & Growth")
-        self._h3("8.2.1 Digital Platform")
+        self._h2("7.2 Market Share Defense & Growth")
+        self._h3("7.2.1 Digital Platform")
         self._body("Cross-reference Report #2, Section 5.5: digital auction platform, mobile-first "
             "member experience, online sale capability. This is the single most important market share "
             "defense investment.")
-        self._h3("8.2.2 Geographic Expansion")
+        self._h3("7.2.2 Geographic Expansion")
         self._body("Evaluate expansion into 1-2 underserved regions within Year 2-3, targeting areas "
             "where auction market closures have created service gaps. Approaches: greenfield branch, "
             "partnership with existing regional cooperative, or acquisition.")
-        self._h3("8.2.3 Value-Added Services")
+        self._h3("7.2.3 Value-Added Services")
         self._body("Launch fee-based advisory services: risk management advisory, hedging education, "
             "insurance brokerage, and market intelligence subscriptions. These services (i) generate "
             "non-commission revenue, (ii) deepen member relationships, and (iii) create switching costs.")
-        self._h3("8.2.4 Cooperative Partnerships / M&A")
+        self._h3("7.2.4 Cooperative Partnerships / M&A")
         self._body("Evaluate strategic partnerships or acquisitions of 1-2 smaller regional "
             "cooperatives in Years 3-5. Target: cooperatives with complementary geographic footprints "
             "and aging leadership (natural succession opportunity).")
-        self._h2("8.3 Generational Succession Playbook")
-        self._h3("8.3.1 Young Rancher Program (Formal)")
+        self._h2("7.3 Generational Succession Playbook")
+        self._h3("7.3.1 Young Rancher Program (Formal)")
         self._body("Launch a branded Young Rancher Program with: (i) dedicated staff (1 FTE), "
             "(ii) regional events (livestock judging, field days, networking), (iii) educational "
             "content (risk management, marketing, finance), (iv) trial membership (reduced first-year "
@@ -1456,22 +1400,22 @@ class DocumentBuilder:
         self._body("Target: 150-200 new young rancher relationships per year by Year 3. At "
             "$15-25K lifetime commission value per relationship, this generates $2.25-5.0M in "
             "future revenue pipeline annually.")
-        self._h3("8.3.2 Estate Transition Liaison Service")
+        self._h3("7.3.2 Estate Transition Liaison Service")
         self._body("Proactive outreach to members approaching retirement age (65+) to facilitate: "
             "(i) introduction to estate planning resources, (ii) identification of successor operators, "
             "(iii) continuity of PLMA marketing relationship through the transition, (iv) warm "
             "handoff from retiring member to successor. Target: increase succession retention rate "
             "from ~29% to 55% within 5 years.")
-        self._h3("8.3.3 Next-Gen Digital Experience")
+        self._h3("7.3.3 Next-Gen Digital Experience")
         self._body("Young producers expect digital-first interaction: mobile auction participation, "
             "real-time market data, instant settlement, electronic documentation, and social media "
             "engagement. This is the generation that will judge PLMA by its app, not its "
             "auction ring.")
-        self._h3("8.3.4 University / Extension Partnerships")
+        self._h3("7.3.4 University / Extension Partnerships")
         self._body("Target 5+ land-grant university partnerships within 3 years: KSU, TAMU, UNL, "
             "SDSU, CSU, OSU. Sponsor livestock judging teams, host guest lectures, fund "
             "cooperative-focused research, and establish internship programs.")
-        self._h2("8.4 1-Year / 5-Year / 10-Year Plans")
+        self._h2("7.4 1-Year / 5-Year / 10-Year Plans")
         self._chart(self.charts.three_horizons(),
                     caption="13 workstreams across 10 years, structured by McKinsey Three Horizons.")
         self._h3("Year 1 — Foundation")
@@ -1495,24 +1439,24 @@ class DocumentBuilder:
         self._bullet("PLMA is the reference cooperative for next-gen engagement")
         self._bullet("Commission structure fully modernized (blended model)")
 
-    # ============ SECTION 9: FINANCIAL MODEL ============
-    def _add_section_9_financials(self):
-        self._h1("9. Financial Model")
-        self._h2("9.1 Commission Revenue Scenarios")
+    # ============ SECTION 8: FINANCIAL MODEL ============
+    def _add_section_8_financials(self):
+        self._h1("8. Financial Model")
+        self._h2("8.1 Commission Revenue Scenarios")
         self._chart(self.charts.commission_scenarios_line(),
                     caption="With mitigation, PLMA stabilizes revenue even under base-case price decline — a $8M+/yr gap vs. unmitigated by Year 5.")
-        self._h2("9.2 Program Costs")
+        self._h2("8.2 Program Costs")
         y1_rows = [[k, f"${v/1000:.0f}K"] for k, v in self.model.year1_costs.items()]
         y1_rows.append(["**TOTAL Year 1**", f"${self.model.total_year1_cost()/1000:.0f}K"])
         self._table(["Year 1 Investment", "Amount"], y1_rows, col_widths=[4.5, 1.5])
         ong_rows = [[k, f"${v/1000:.0f}K"] for k, v in self.model.ongoing_costs.items()]
         ong_rows.append(["**TOTAL Ongoing**", f"${self.model.total_ongoing_cost()/1000:.0f}K"])
         self._table(["Ongoing Annual Cost (Year 2+)", "Amount"], ong_rows, col_widths=[4.5, 1.5])
-        self._h2("9.3 Annual Benefits")
+        self._h2("8.3 Annual Benefits")
         ben_rows = [[k, f"${v/1000:.0f}K"] for k, v in self.model.annual_benefits.items()]
         ben_rows.append(["**TOTAL Annual Benefit**", f"${self.model.total_annual_benefit()/1000:.0f}K"])
         self._table(["Benefit Category", "Annual Value"], ben_rows, col_widths=[4.5, 1.5])
-        self._h2("9.4 10-Year Cash Flows & NPV")
+        self._h2("8.4 10-Year Cash Flows & NPV")
         cf_rows = []
         cum = 0
         for f in self.model.cash_flows():
@@ -1529,7 +1473,7 @@ class DocumentBuilder:
                    f"Payback: {payback} months")
         self._chart(self.charts.roi_projection(),
                     caption="Program breaks even during Year 2; cumulative 10-year net exceeds $37M nominally.")
-        self._h2("9.5 Sensitivity Analysis")
+        self._h2("8.5 Sensitivity Analysis")
         self._chart(self.charts.sensitivity_tornado(),
                     caption="Benefit realization and cattle price severity are the top NPV drivers; program is robust across scenarios.")
         self._callout("Robustness",
@@ -1538,9 +1482,9 @@ class DocumentBuilder:
             "NPV remains strongly positive. The investment case does not depend on optimistic assumptions.",
             kind="finding")
 
-    # ============ SECTION 10: CONCLUSION ============
-    def _add_section_10_conclusion(self):
-        self._h1("10. Conclusion & Next Steps")
+    # ============ SECTION 9: CONCLUSION ============
+    def _add_section_9_conclusion(self):
+        self._h1("9. Conclusion & Next Steps")
         self._callout("Three Reports, One Transformation",
             "Reports #1, #2, and #3 are not three separate initiatives. They are three lenses on a "
             "single imperative: PLMA must modernize its risk management, technology, and market "
@@ -1556,7 +1500,7 @@ class DocumentBuilder:
         self._body("The recommended mitigation program — $2.8M Year 1, $1.8M ongoing — generates "
             f"~${self.model.npv()/1e6:.0f}M in 10-year NPV and positions PLMA to emerge from "
             "the cattle cycle correction as a stronger, more diversified, and younger cooperative.")
-        self._h2("10.1 Immediate Actions (First 90 Days)")
+        self._h2("9.1 Immediate Actions (First 90 Days)")
         self._bullet("Week 1-2: CFO-led briefing on Report #3 findings; integrate with Reports #1 & #2 action items")
         self._bullet("Week 2-4: Board approval of Year 1 budget ($2.8M); integrate into unified transformation budget")
         self._bullet("Week 4-6: Launch hedging program for company-owned cattle")
@@ -1564,7 +1508,7 @@ class DocumentBuilder:
         self._bullet("Week 6-10: Young Rancher Program staff hired; university outreach initiated")
         self._bullet("Week 8-12: Leading indicator dashboard deployed (v1)")
         self._bullet("Week 12: Integrated PMO operational covering all three report workstreams")
-        self._h2("10.2 Integrated Budget Summary (All 3 Reports)")
+        self._h2("9.2 Integrated Budget Summary (All 3 Reports)")
         self._table(["Report", "Year 1 Cost", "Ongoing/yr", "10-yr NPV"],
             [["#1: Credit Risk Mitigation", "$1.72M", "$1.17M", "~$20M"],
              ["#2: Technology Strategy", "$4.80M", "$2.60M", "~$34M"],
@@ -1588,10 +1532,10 @@ class DocumentBuilder:
         ], col_widths=[1.0, 1.5, 1.5, 1.5])
 
         self._h1("Appendix B: Commission Sensitivity Model Detail")
-        self._body("Model assumes: $3.2B transaction volume, 72% cattle / 28% pork split, "
+        self._body("Model assumes: $3.2B transaction volume, 95% cattle / 5% lamb split, "
             "1.875% average commission rate. Cattle price declines applied to cattle volume only; "
-            "pork volume held constant. Scenarios represent annual average price declines from "
-            "peak-cycle levels.")
+            "lamb volume held constant (immaterial). Scenarios represent annual average price "
+            "declines from peak-cycle levels.")
 
         self._h1("Appendix C: Generational Demographics")
         self._table(["Age Group", "2012 Census", "2022 Census", "2035 Projected", "Change"],
@@ -1619,7 +1563,6 @@ class DocumentBuilder:
             ("Disintermediation", "Removal of intermediaries (like PLMA) from supply chain transactions."),
             ("EID", "Electronic Identification — RFID tags for individual animal tracking."),
             ("Feeder Cattle", "Weaned calves or yearlings ready for feedlot placement."),
-            ("Hog-Corn Ratio", "Lean hog price / corn price — proxy for pork producer profitability."),
             ("Mark-to-Market", "Revaluing inventory to current market prices; unrealized gain/loss."),
             ("P&SA", "Packers & Stockyards Act — USDA livestock marketing regulation."),
         ]:
@@ -1636,9 +1579,6 @@ class DocumentBuilder:
             "CME Group, \"Live Cattle and Feeder Cattle Futures: Market Analysis,\" 2025-2026.",
             "Livestock Marketing Information Center (LMIC), \"Monthly Livestock Outlook,\" 2025-2026.",
             "Kansas State University, \"AgManager: Livestock Market Analysis,\" 2025-2026.",
-            "USDA ERS, \"Hogs & Pork: Outlook,\" March 2026.",
-            "USDA APHIS, \"African Swine Fever Response Plan,\" updated 2025.",
-            "National Pork Producers Council, \"ASF Preparedness,\" 2025.",
             "USDA AMS Packers & Stockyards Division, \"Annual Report,\" 2025.",
             "USDA ERS, \"Farm Income and Wealth Statistics,\" 2025-2026.",
             "Federal Reserve Bank of Kansas City, \"Agricultural Finance Databook,\" Q4 2025.",
@@ -1677,14 +1617,13 @@ class DocumentBuilder:
         self._add_toc()
         self._add_executive_summary()
         self._add_section_2_cattle()
-        self._add_section_3_pork()
-        self._add_section_4_market_share()
-        self._add_section_5_succession()
-        self._add_section_6_control()
-        self._add_section_7_indicators()
-        self._add_section_8_mitigation()
-        self._add_section_9_financials()
-        self._add_section_10_conclusion()
+        self._add_section_3_market_share()
+        self._add_section_4_succession()
+        self._add_section_5_control()
+        self._add_section_6_indicators()
+        self._add_section_7_mitigation()
+        self._add_section_8_financials()
+        self._add_section_9_conclusion()
         self._add_appendices()
         return self.doc
 
