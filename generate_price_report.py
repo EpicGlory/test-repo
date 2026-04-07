@@ -568,9 +568,9 @@ class PriceChartGenerator:
         ax.grid(True, axis="y", alpha=0.3)
         ax.set_axisbelow(True)
         ax.annotate("53% of operators\nwill be 65+ by 2035",
-                    xy=(4.5, 29), xytext=(3, 32), fontsize=10, fontweight="bold",
+                    xy=(4.5, 29.5), xytext=(4.8, 25), fontsize=10, fontweight="bold",
                     color=self.config.RED_HEX,
-                    arrowprops=dict(arrowstyle="->", color=self.config.RED_HEX))
+                    arrowprops=dict(arrowstyle="->", color=self.config.RED_HEX, lw=1.5))
         ax.text(0.01, -0.14, "Source: USDA Census of Agriculture 2012, 2022; 2035 projected using cohort survival model.",
                 transform=ax.transAxes, fontsize=8, color=self.config.MID_GRAY_HEX, style="italic")
         return self._finalize(fig)
@@ -646,8 +646,8 @@ class PriceChartGenerator:
 
     # 11. Leading Indicator Scorecard
     def leading_indicators(self):
-        fig, ax = plt.subplots(figsize=(11, 8))
-        ax.set_xlim(0, 12); ax.set_ylim(0, 12)
+        fig, ax = plt.subplots(figsize=(12, 8))
+        ax.set_xlim(0, 14); ax.set_ylim(0, 12)
         ax.axis("off")
         # Category headers
         categories = [
@@ -688,8 +688,8 @@ class PriceChartGenerator:
         for i, (label, color) in enumerate([("On Track", self.config.GREEN_HEX),
                                              ("Watch", self.config.AMBER_HEX),
                                              ("Action Required", self.config.RED_HEX)]):
-            ax.scatter(9 + i*1.5, 11.5, s=100, color=color, edgecolor="white", linewidth=2)
-            ax.text(9 + i*1.5, 11.0, label, fontsize=8, ha="center",
+            ax.scatter(9 + i*2.0, 11.5, s=100, color=color, edgecolor="white", linewidth=2)
+            ax.text(9 + i*2.0, 11.0, label, fontsize=8, ha="center",
                     color=self.config.DARK_GRAY_HEX)
         return self._finalize(fig)
 
@@ -710,14 +710,15 @@ class PriceChartGenerator:
             ("Next-gen business model transformation", 48, 108, self.config.AMBER_HEX),
             ("Platform revenue (data, advisory)", 60, 120, self.config.AMBER_HEX),
         ]
-        fig, ax = plt.subplots(figsize=(12, 6.5))
+        fig, ax = plt.subplots(figsize=(14, 7))
         for i, (name, start, end, color) in enumerate(workstreams):
             bar_width = end - start
             ax.barh(i, bar_width, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-            if bar_width < 15:
-                ax.text(end + 1, i, name, ha="left", va="center",
-                        fontsize=7.5, color=color, fontweight="bold", clip_on=False)
+            if bar_width < 20:
+                # Place label to the RIGHT of the bar, in matching color
+                ax.text(end + 2, i, name, ha="left", va="center",
+                        fontsize=7, color=color, fontweight="bold")
             else:
                 ax.text(start + bar_width/2, i, name, ha="center", va="center",
                         fontsize=7.5, color="white", fontweight="bold")
@@ -730,7 +731,7 @@ class PriceChartGenerator:
         ax.text(90, len(workstreams)+0.3, "HORIZON 3\n(Years 6-10)", ha="center",
                 fontsize=10, fontweight="bold", color=self.config.AMBER_HEX)
         ax.set_yticks([]); ax.set_xlabel("Months from Inception", fontsize=10)
-        ax.set_xlim(0, 122); ax.set_ylim(-0.8, len(workstreams)+1.2)
+        ax.set_xlim(0, 170); ax.set_ylim(-0.8, len(workstreams)+1.2)
         ax.set_title("Price & Market Position Roadmap — Three Horizons",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3); ax.set_axisbelow(True)
@@ -800,15 +801,18 @@ class PriceChartGenerator:
         tornado, base = self.model.sensitivity()
         tornado = tornado[:6]
         base_m = base / 1_000_000
-        fig, ax = plt.subplots(figsize=(10, 5.5))
+        fig, ax = plt.subplots(figsize=(12, 5.5))
         for i, t in enumerate(tornado):
             low_m = t["low"] / 1_000_000 - base_m
             high_m = t["high"] / 1_000_000 - base_m
             ax.barh(i, low_m, color=self.config.RED_HEX, edgecolor="white", height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white", height=0.6, alpha=0.85)
-            ax.text(low_m-1.2, i, f"${t['low']/1e6:.1f}M", ha="right", va="center",
+            # Place labels well outside bars; use absolute position for small bars
+            low_offset = min(low_m - 1.5, -1.5)
+            high_offset = max(high_m + 1.5, 1.5)
+            ax.text(low_offset, i, f"${t['low']/1e6:.1f}M", ha="right", va="center",
                     fontsize=9, clip_on=False)
-            ax.text(high_m+1.2, i, f"${t['high']/1e6:.1f}M", ha="left", va="center",
+            ax.text(high_offset, i, f"${t['high']/1e6:.1f}M", ha="left", va="center",
                     fontsize=9, clip_on=False)
         ax.set_yticks(range(len(tornado)))
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
