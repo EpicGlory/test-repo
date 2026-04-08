@@ -437,7 +437,7 @@ class PriceChartGenerator:
             ax.text(i+1, 30,
                     f"-${s['revenue_loss']/1e6:.1f}M\n({s['pct_of_revenue']*100:.0f}%)",
                     ha="center", fontsize=9, fontweight="bold",
-                    color=self.config.RED_HEX, va="top")
+                    color="white", va="top")
         ax.set_title("Commission Revenue Sensitivity to Cattle Price Decline",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.set_ylabel("Annual Commission Revenue ($M)", fontsize=10)
