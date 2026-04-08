@@ -423,7 +423,7 @@ class ChartGenerator:
                 ax.add_patch(Rectangle((j, i), 1, 1, facecolor=color, edgecolor="white", linewidth=2))
         # Each risk has custom label offset (dx, dy) in points to prevent overlaps
         risks = [
-            ("Buyer bankruptcy\n(feedlot)", 4, 4, (8, 6)),
+            ("Buyer bankruptcy\n(feedlot)", 4, 4, (8, -22)),
             ("Producer default", 4, 3, (8, -12)),
             ("Packer consolidation", 2, 4, (-80, 8)),
             ("Cattle price collapse", 3, 4, (8, 10)),
