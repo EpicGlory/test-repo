@@ -391,9 +391,10 @@ class ChartGenerator:
                         color=self.config.BLUE_HEX, alpha=0.85, label="Non-Real-Estate Debt")
         total = [r+n for r,n in zip(re_debt,non_re_debt)]
         ax.plot(years, total, color=self.config.RED_HEX, linewidth=2.5, marker="o", markersize=5, label="Total")
-        ax.annotate(f"${total[-2]}B\n(2025)", xy=(2025, total[-2]), xytext=(2022.5, 680),
+        ax.annotate(f"${total[-2]}B\n(2025)", xy=(2025, total[-2]), xytext=(2022, 580),
                     fontsize=10, fontweight="bold", color=self.config.RED_HEX,
-                    arrowprops=dict(arrowstyle="->", color=self.config.RED_HEX))
+                    arrowprops=dict(arrowstyle="->", color=self.config.RED_HEX, lw=1.2),
+                    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.9))
         ax.set_title("Total U.S. Farm Sector Debt (2015–2026E)", fontsize=13,
                      fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.set_ylabel("Debt ($ Billions)", fontsize=10)
@@ -420,25 +421,28 @@ class ChartGenerator:
                 else:
                     color = "#FDE7E9"
                 ax.add_patch(Rectangle((j, i), 1, 1, facecolor=color, edgecolor="white", linewidth=2))
+        # Each risk has custom label offset (dx, dy) in points to prevent overlaps
         risks = [
-            ("Buyer bankruptcy (feedlot)", 4, 4),
-            ("Producer default", 4, 3),
-            ("Packer consolidation", 2, 4),
-            ("Cattle price collapse", 3, 4),
-            ("ASF outbreak", 2, 5),
-            ("Interest rate spike", 3, 3),
-            ("Regulatory (P&SA)", 2, 2),
-            ("IT/cyber breach", 2, 3),
-            ("Key personnel loss", 3, 2),
-            ("Feed cost spike", 3, 3),
-            ("Basis risk", 4, 2),
-            ("Concentration risk", 3, 4),
+            ("Buyer bankruptcy\n(feedlot)", 4, 4, (8, 6)),
+            ("Producer default", 4, 3, (8, -12)),
+            ("Packer consolidation", 2, 4, (-80, 8)),
+            ("Cattle price collapse", 3, 4, (8, 10)),
+            ("ASF outbreak", 2, 5, (8, 6)),
+            ("Interest rate spike", 3, 3, (8, 10)),
+            ("Regulatory (P&SA)", 2, 2, (8, -12)),
+            ("IT/cyber breach", 2, 3, (-75, -12)),
+            ("Key personnel loss", 3, 2, (8, 8)),
+            ("Feed cost spike", 3, 3, (-70, -14)),
+            ("Basis risk", 4, 2, (8, 8)),
+            ("Concentration risk", 3, 4, (-80, -14)),
         ]
-        for name, likelihood, impact in risks:
+        for name, likelihood, impact, offset in risks:
             ax.scatter(likelihood-0.5, impact-0.5, s=150, c=self.config.NAVY_HEX,
                        edgecolor="white", linewidth=2, zorder=5)
-            ax.annotate(name, (likelihood-0.5, impact-0.5), fontsize=8,
-                        xytext=(5, 5), textcoords="offset points", color=self.config.DARK_GRAY_HEX)
+            ax.annotate(name, (likelihood-0.5, impact-0.5), fontsize=7.5,
+                        xytext=offset, textcoords="offset points",
+                        color=self.config.DARK_GRAY_HEX, fontweight="bold",
+                        bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85))
         ax.set_xlim(0, 5)
         ax.set_ylim(0, 5)
         ax.set_xticks([0.5, 1.5, 2.5, 3.5, 4.5])
@@ -624,8 +628,10 @@ class ChartGenerator:
         for bars in [b1, b2, b3]:
             for bar in bars:
                 h = bar.get_height()
+                # Add whitespace: positive bars label above, negative bars label below
+                pad = 0.8 if h >= 0 else -0.8
                 va = "bottom" if h >= 0 else "top"
-                ax.text(bar.get_x() + bar.get_width()/2, h, f"{h:.1f}",
+                ax.text(bar.get_x() + bar.get_width()/2, h + pad, f"{h:.1f}",
                         ha="center", va=va, fontsize=8, color=self.config.DARK_GRAY_HEX)
         return self._finalize(fig)
 
@@ -646,14 +652,17 @@ class ChartGenerator:
         ]
         fig, ax = plt.subplots(figsize=(14, 7))
         for i, (name, start, end, color) in enumerate(workstreams):
-            ax.barh(i, end - start, left=start, color=color, edgecolor="white",
+            bar_width = end - start
+            ax.barh(i, bar_width, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-        # Use y-axis labels for workstream names to prevent text clipping
-        ax.set_yticks(range(len(workstreams)))
-        ax.set_yticklabels([name for name, _, _, _ in workstreams],
-                           fontsize=7.5, fontweight="bold")
-        for i, (_, _, _, color) in enumerate(workstreams):
-            ax.get_yticklabels()[i].set_color(color)
+            if color == self.config.AMBER_HEX:
+                # Horizon 3: text inside bar, dark blue font
+                ax.text(start + bar_width/2, i, name, ha="center", va="center",
+                        fontsize=9, color=self.config.NAVY_HEX, fontweight="bold")
+            else:
+                # Horizon 1 & 2: text outside bar to the right, matching bar fill color
+                ax.text(end + 1, i, name, ha="left", va="center",
+                        fontsize=9, color=color, fontweight="bold")
         ax.axvline(x=12, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=60, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(6, len(workstreams)+0.3, "HORIZON 1\n(Year 1)", ha="center", fontsize=10,
@@ -662,14 +671,13 @@ class ChartGenerator:
                 fontweight="bold", color=self.config.BLUE_HEX)
         ax.text(90, len(workstreams)+0.3, "HORIZON 3\n(Years 6-10)", ha="center", fontsize=10,
                 fontweight="bold", color=self.config.AMBER_HEX)
-        ax.set_xlabel("Months from Inception", fontsize=10)
-        ax.set_xlim(0, 122)
+        ax.set_yticks([]); ax.set_xlabel("Months from Inception", fontsize=10)
+        ax.set_xlim(0, 130)
         ax.set_ylim(-0.8, len(workstreams)+1.2)
         ax.set_title("Implementation Roadmap: McKinsey Three Horizons Framework",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3)
         ax.set_axisbelow(True)
-        fig.subplots_adjust(left=0.30, right=0.95)
         return self._finalize(fig)
 
     def roi_projection(self):
@@ -755,32 +763,23 @@ class ChartGenerator:
                     height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white",
                     height=0.6, alpha=0.85)
-        # Render once to establish axes scale before placing labels
-        fig.canvas.draw()
-        pad_pts = 25  # padding from bar end, in points
+        # Place labels based on ACTUAL bar direction (handles inverted rows like discount rate)
+        data_pad = 2.0
         for i, t in enumerate(tornado):
             low_m = t["low"] / 1_000_000 - base_m
             high_m = t["high"] / 1_000_000 - base_m
-            bar_range = abs(high_m - low_m)
-            # For very small bars, shift labels further and stagger vertically
-            if bar_range < 3:
-                ax.annotate(f"${t['low']/1e6:.1f}M", xy=(low_m, i),
-                            xytext=(-pad_pts * 2, -6), textcoords="offset points",
-                            ha="right", va="center", fontsize=8.5, fontweight="bold",
-                            clip_on=False)
-                ax.annotate(f"${t['high']/1e6:.1f}M", xy=(high_m, i),
-                            xytext=(pad_pts * 2, 6), textcoords="offset points",
-                            ha="left", va="center", fontsize=8.5, fontweight="bold",
-                            clip_on=False)
+            leftmost = min(low_m, high_m)
+            rightmost = max(low_m, high_m)
+            if low_m <= high_m:
+                left_label = f"${t['low']/1e6:.1f}M"
+                right_label = f"${t['high']/1e6:.1f}M"
             else:
-                ax.annotate(f"${t['low']/1e6:.1f}M", xy=(low_m, i),
-                            xytext=(-pad_pts, 0), textcoords="offset points",
-                            ha="right", va="center", fontsize=9, fontweight="bold",
-                            clip_on=False)
-                ax.annotate(f"${t['high']/1e6:.1f}M", xy=(high_m, i),
-                            xytext=(pad_pts, 0), textcoords="offset points",
-                            ha="left", va="center", fontsize=9, fontweight="bold",
-                            clip_on=False)
+                left_label = f"${t['high']/1e6:.1f}M"
+                right_label = f"${t['low']/1e6:.1f}M"
+            ax.text(leftmost - data_pad, i, left_label,
+                    ha="right", va="center", fontsize=9, clip_on=False)
+            ax.text(rightmost + data_pad, i, right_label,
+                    ha="left", va="center", fontsize=9, clip_on=False)
         ax.set_yticks(y_pos)
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
         ax.invert_yaxis()
