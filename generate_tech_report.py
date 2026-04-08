@@ -400,7 +400,7 @@ class TechChartGenerator:
 
     # 3. Tech risk heat map
     def tech_risk_heat_map(self):
-        fig, ax = plt.subplots(figsize=(9, 7))
+        fig, ax = plt.subplots(figsize=(10, 8))
         for i in range(5):
             for j in range(5):
                 sev = (i+1) * (j+1)
@@ -413,27 +413,30 @@ class TechChartGenerator:
                 else:
                     c = "#FDE7E9"
                 ax.add_patch(Rectangle((j, i), 1, 1, facecolor=c, edgecolor="white", linewidth=2))
+        # Each risk has custom (dx, dy) offset in points to stagger and prevent overlaps
         risks = [
-            ("Ransomware attack", 4, 5),
-            ("Digital marketplace disruption", 4, 4),
-            ("Legacy tech debt drag", 5, 3),
-            ("AI model bias / P&SA", 3, 4),
-            ("Data privacy breach", 3, 4),
-            ("Talent shortage", 4, 3),
-            ("Vendor lock-in", 3, 3),
-            ("Cloud outage", 2, 3),
-            ("SEC cyber disclosure", 2, 3),
-            ("Insider threat", 3, 3),
-            ("Shadow IT", 4, 2),
-            ("AI hallucination in member comms", 3, 2),
-            ("State AI regulation", 2, 2),
+            ("Ransomware attack", 4, 5, (8, 8)),
+            ("Digital marketplace\ndisruption", 4, 4, (8, -18)),
+            ("Legacy tech debt drag", 5, 3, (-8, -18)),
+            ("AI model bias / P&SA", 3, 4, (8, 10)),
+            ("Data privacy breach", 3, 4, (-85, -16)),
+            ("Talent shortage", 4, 3, (8, 10)),
+            ("Vendor lock-in", 3, 3, (8, 10)),
+            ("Cloud outage", 2, 3, (8, 12)),
+            ("SEC cyber disclosure", 2, 3, (-90, -16)),
+            ("Insider threat", 3, 3, (-70, -16)),
+            ("Shadow IT", 4, 2, (8, 8)),
+            ("AI hallucination", 3, 2, (8, -16)),
+            ("State AI regulation", 2, 2, (8, 8)),
         ]
-        for name, lk, imp in risks:
+        _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85)
+        for name, lk, imp, offset in risks:
             ax.scatter(lk-0.5, imp-0.5, s=160, c=self.config.NAVY_HEX,
                        edgecolor="white", linewidth=2, zorder=5)
-            ax.annotate(name, (lk-0.5, imp-0.5), fontsize=8,
-                        xytext=(6, 5), textcoords="offset points",
-                        color=self.config.DARK_GRAY_HEX)
+            ax.annotate(name, (lk-0.5, imp-0.5), fontsize=7.5,
+                        xytext=offset, textcoords="offset points",
+                        color=self.config.DARK_GRAY_HEX, fontweight="bold",
+                        bbox=_bbox)
         ax.set_xlim(0, 5); ax.set_ylim(0, 5)
         ax.set_xticks([0.5, 1.5, 2.5, 3.5, 4.5])
         ax.set_xticklabels(["Rare", "Unlikely", "Possible", "Likely", "Certain"])
@@ -456,7 +459,9 @@ class TechChartGenerator:
                        edgecolor="white", width=0.6, label="Disclosed ag-sector cyber incidents")
         for bar, val in zip(bars, incidents):
             ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2,
-                     f"{val}", ha="center", fontsize=9, color=self.config.DARK_GRAY_HEX)
+                     f"{val}", ha="center", fontsize=9, fontweight="bold",
+                     color=self.config.DARK_GRAY_HEX, zorder=6,
+                     bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.5, ec="none"))
         ax1.set_ylabel("Incidents Disclosed", fontsize=10, color=self.config.NAVY_HEX)
         ax1.tick_params(axis="y", labelcolor=self.config.NAVY_HEX)
         ax1.set_xlabel("Year", fontsize=10)
@@ -518,14 +523,19 @@ class TechChartGenerator:
             "Digital": self.config.PURPLE_HEX, "Security": self.config.RED_HEX,
             "Data": self.config.LIGHT_BLUE_HEX, "Blockchain": self.config.MID_GRAY_HEX,
         }
-        fig, ax = plt.subplots(figsize=(10, 7))
-        for u in uc:
+        fig, ax = plt.subplots(figsize=(12, 8))
+        _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85)
+        for idx, u in enumerate(uc):
             ax.scatter(u["feasibility"], u["value"],
                        s=u["nb_pv"]*180, c=cat_colors[u["category"]],
                        edgecolor="white", linewidth=2, alpha=0.85, zorder=3)
+            # Alternate labels above and below dots
+            dy = 14 if idx % 2 == 0 else -14
             ax.annotate(u["name"], (u["feasibility"], u["value"]),
-                        xytext=(8, 4), textcoords="offset points", fontsize=8.5,
-                        color=self.config.DARK_GRAY_HEX, fontweight="bold")
+                        xytext=(0, dy), textcoords="offset points", fontsize=8.5,
+                        ha="center", va="bottom" if dy > 0 else "top",
+                        color=self.config.DARK_GRAY_HEX, fontweight="bold",
+                        bbox=_bbox)
         # Quadrant lines
         ax.axhline(y=7, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=7, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
@@ -578,34 +588,38 @@ class TechChartGenerator:
 
     # 8. Tech portfolio 2x2
     def tech_portfolio_2x2(self):
-        fig, ax = plt.subplots(figsize=(10, 7))
+        fig, ax = plt.subplots(figsize=(11, 8))
+        # Custom per-tech offsets (dx, dy) to prevent overlap
         techs = [
-            ("Cybersecurity\n(Zero Trust)", 9, 8, self.config.RED_HEX),
-            ("Cloud/Data Platform", 9, 7, self.config.NAVY_HEX),
-            ("GenAI Back-office", 8, 9, self.config.BLUE_HEX),
-            ("ML Credit Scoring", 9, 8, self.config.NAVY_HEX),
-            ("Digital Auction Platform", 9, 5, self.config.PURPLE_HEX),
-            ("RPA", 7, 9, self.config.GREEN_HEX),
-            ("Computer Vision", 7, 4, self.config.BLUE_HEX),
-            ("IoT/EID", 6, 5, self.config.AMBER_HEX),
-            ("Blockchain", 4, 3, self.config.MID_GRAY_HEX),
-            ("Metaverse/AR", 2, 3, self.config.MID_GRAY_HEX),
+            ("Cybersecurity (Zero Trust)", 9, 8, self.config.RED_HEX, (0, 14)),
+            ("Cloud/Data Platform", 9, 7, self.config.NAVY_HEX, (0, -16)),
+            ("GenAI Back-office", 8, 9, self.config.BLUE_HEX, (0, 14)),
+            ("ML Credit Scoring", 9, 8, self.config.NAVY_HEX, (0, -16)),
+            ("Digital Auction Platform", 9, 5, self.config.PURPLE_HEX, (0, -16)),
+            ("RPA", 7, 9, self.config.GREEN_HEX, (0, -16)),
+            ("Computer Vision", 7, 4, self.config.BLUE_HEX, (0, 14)),
+            ("IoT/EID", 6, 5, self.config.AMBER_HEX, (0, 14)),
+            ("Blockchain", 4, 3, self.config.MID_GRAY_HEX, (0, -16)),
+            ("Metaverse/AR", 2, 3, self.config.MID_GRAY_HEX, (0, 14)),
         ]
-        for name, impact, feasibility, color in techs:
+        _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85)
+        for name, impact, feasibility, color, offset in techs:
             ax.scatter(feasibility, impact, s=300, c=color, edgecolor="white",
                        linewidth=2, alpha=0.85, zorder=3)
-            ax.annotate(name, (feasibility, impact), xytext=(8, 4),
-                        textcoords="offset points", fontsize=9,
-                        color=self.config.DARK_GRAY_HEX, fontweight="bold")
+            dy = offset[1]
+            ax.annotate(name, (feasibility, impact), xytext=offset,
+                        textcoords="offset points", fontsize=8.5, ha="center",
+                        va="bottom" if dy > 0 else "top",
+                        color=self.config.DARK_GRAY_HEX, fontweight="bold", bbox=_bbox)
         ax.axhline(y=5.5, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=5.5, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
-        ax.text(8, 9.5, "INVEST NOW", fontsize=12, fontweight="bold",
+        ax.text(8, 9.8, "INVEST NOW", fontsize=11, fontweight="bold",
                 color=self.config.GREEN_HEX, ha="center")
-        ax.text(3, 9.5, "STRATEGIC\nBETS", fontsize=11, fontweight="bold",
+        ax.text(3, 9.8, "STRATEGIC BETS", fontsize=10, fontweight="bold",
                 color=self.config.AMBER_HEX, ha="center")
-        ax.text(8, 2, "QUICK WINS", fontsize=11, fontweight="bold",
+        ax.text(8, 1.2, "QUICK WINS", fontsize=10, fontweight="bold",
                 color=self.config.BLUE_HEX, ha="center")
-        ax.text(3, 2, "MONITOR / DEFER", fontsize=11, fontweight="bold",
+        ax.text(3, 1.2, "MONITOR / DEFER", fontsize=10, fontweight="bold",
                 color=self.config.RED_HEX, ha="center")
         ax.set_xlim(0, 10); ax.set_ylim(0, 10)
         ax.set_xlabel("Feasibility (technical + organizational readiness)",
@@ -640,7 +654,9 @@ class TechChartGenerator:
         ax.set_xticks(angles)
         ax.set_xticklabels(categories, fontsize=10, fontweight="bold")
         ax.set_yticks([1, 2, 3, 4, 5])
-        ax.set_yticklabels(["1", "2", "3", "4", "5"], fontsize=8)
+        ax.set_yticklabels(["1", "2", "3", "4", "5"], fontsize=9,
+                           fontweight="bold", zorder=10,
+                           bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.8))
         ax.set_ylim(0, 5.3)
         ax.set_title("PLMA Digital Maturity Assessment vs. Peers & Leaders",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=30)
@@ -650,10 +666,8 @@ class TechChartGenerator:
 
     # 10. Gartner Hype Cycle positioning
     def hype_cycle(self):
-        fig, ax = plt.subplots(figsize=(11, 6))
-        # Hype curve
+        fig, ax = plt.subplots(figsize=(13, 7))
         x = np.linspace(0, 10, 400)
-        # Peak + trough + slope
         peak = 4 * np.exp(-((x - 1.8)**2) / 0.6) + 1
         trough = -1.5 * np.exp(-((x - 4.2)**2) / 0.5) + 0
         slope = 0.55 * (x - 5.5) / (1 + 0.3 * (x - 5.5))
@@ -662,7 +676,6 @@ class TechChartGenerator:
         y = np.clip(y, 0, None)
         ax.plot(x, y, color=self.config.NAVY_HEX, linewidth=3)
         ax.fill_between(x, 0, y, color=self.config.LIGHT_BLUE_HEX, alpha=0.2)
-        # Phase labels
         phases = [
             (0.6, "Innovation\nTrigger"),
             (1.9, "Peak of Inflated\nExpectations"),
@@ -671,24 +684,28 @@ class TechChartGenerator:
             (9.3, "Plateau of\nProductivity"),
         ]
         for px, label in phases:
-            ax.text(px, -0.9, label, ha="center", fontsize=8.5,
+            ax.text(px, -1.1, label, ha="center", fontsize=8.5,
                     color=self.config.DARK_GRAY_HEX, fontweight="bold")
-        # Tech positions
+        # Tech positions with explicit label coordinates (text_x, text_y) to prevent overlap
+        _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.9)
         techs = [
-            ("Agentic AI", 1.3, 4.8, self.config.RED_HEX),
-            ("GenAI (Enterprise)", 2.2, 4.3, self.config.RED_HEX),
-            ("Blockchain (Ag)", 4.0, -0.3, self.config.AMBER_HEX),
-            ("Computer Vision\n(Livestock)", 5.2, 0.8, self.config.AMBER_HEX),
-            ("IoT/EID", 6.8, 2.4, self.config.GREEN_HEX),
-            ("RPA", 8.5, 3.2, self.config.GREEN_HEX),
-            ("Cloud Core", 9.2, 3.5, self.config.GREEN_HEX),
-            ("ML Credit Scoring", 7.3, 2.7, self.config.GREEN_HEX),
-            ("Digital Auction\nPlatform", 7.8, 3.0, self.config.GREEN_HEX),
+            ("Agentic AI", 1.3, 4.8, self.config.RED_HEX, 0.5, 5.8),
+            ("GenAI (Enterprise)", 2.2, 4.3, self.config.RED_HEX, 3.2, 5.0),
+            ("Blockchain (Ag)", 4.0, -0.3, self.config.AMBER_HEX, 4.0, -1.3),
+            ("Computer Vision\n(Livestock)", 5.2, 0.8, self.config.AMBER_HEX, 4.2, 1.8),
+            ("IoT/EID", 6.8, 2.4, self.config.GREEN_HEX, 6.0, 1.4),
+            ("RPA", 8.5, 3.2, self.config.GREEN_HEX, 9.5, 2.5),
+            ("Cloud Core", 9.2, 3.5, self.config.GREEN_HEX, 10.0, 4.3),
+            ("ML Credit Scoring", 7.3, 2.7, self.config.GREEN_HEX, 6.8, 3.8),
+            ("Digital Auction\nPlatform", 7.8, 3.0, self.config.GREEN_HEX, 8.5, 4.5),
         ]
-        for name, px, py, color in techs:
+        for name, px, py, color, tx, ty in techs:
             ax.scatter(px, py, s=140, c=color, edgecolor="white", linewidth=2, zorder=5)
-            ax.annotate(name, (px, py), xytext=(6, 8), textcoords="offset points",
-                        fontsize=8.5, color=self.config.DARK_GRAY_HEX)
+            ax.annotate(name, xy=(px, py), xytext=(tx, ty),
+                        fontsize=8.5, color=self.config.DARK_GRAY_HEX, fontweight="bold",
+                        ha="center", va="center", bbox=_bbox,
+                        arrowprops=dict(arrowstyle="-", color=self.config.MID_GRAY_HEX,
+                                        lw=0.7, alpha=0.6))
         ax.set_xticks([])
         ax.set_yticks([])
         ax.spines["left"].set_visible(False)
@@ -733,14 +750,17 @@ class TechChartGenerator:
         ]
         fig, ax = plt.subplots(figsize=(14, 7.5))
         for i, (name, start, end, color) in enumerate(workstreams):
-            ax.barh(i, end - start, left=start, color=color, edgecolor="white",
+            bar_width = end - start
+            ax.barh(i, bar_width, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-        # Use y-axis labels for workstream names to prevent text clipping
-        ax.set_yticks(range(len(workstreams)))
-        ax.set_yticklabels([name for name, _, _, _ in workstreams],
-                           fontsize=7.5, fontweight="bold")
-        for i, (_, _, _, color) in enumerate(workstreams):
-            ax.get_yticklabels()[i].set_color(color)
+            if color == self.config.AMBER_HEX:
+                # Horizon 3: text inside bar, dark blue font
+                ax.text(start + bar_width/2, i, name, ha="center", va="center",
+                        fontsize=9, color=self.config.NAVY_HEX, fontweight="bold")
+            else:
+                # Horizon 1 & 2: text outside bar to the right, matching bar color
+                ax.text(end + 1, i, name, ha="left", va="center",
+                        fontsize=9, color=color, fontweight="bold")
         ax.axvline(x=12, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=60, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(6, len(workstreams)+0.3, "HORIZON 1\nFoundation (Y1)", ha="center",
@@ -749,14 +769,13 @@ class TechChartGenerator:
                 ha="center", fontsize=10, fontweight="bold", color=self.config.BLUE_HEX)
         ax.text(90, len(workstreams)+0.3, "HORIZON 3\nReinvention (Y6-10)",
                 ha="center", fontsize=10, fontweight="bold", color=self.config.AMBER_HEX)
-        ax.set_xlabel("Months from Inception", fontsize=10)
-        ax.set_xlim(0, 122)
+        ax.set_yticks([]); ax.set_xlabel("Months from Inception", fontsize=10)
+        ax.set_xlim(0, 130)
         ax.set_ylim(-0.8, len(workstreams)+1.2)
         ax.set_title("Technology Transformation Roadmap — Three Horizons",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3)
         ax.set_axisbelow(True)
-        fig.subplots_adjust(left=0.30, right=0.95)
         return self._finalize(fig)
 
     # 12. Cumulative ROI
@@ -813,8 +832,13 @@ class TechChartGenerator:
                     fontsize=10, fontweight="bold", color="white")
             cum += val
         ax.bar(len(items), cum, color=self.config.NAVY_HEX, edgecolor="white", linewidth=1.5)
-        ax.text(len(items), cum/2, f"${cum:+.1f}M\nNet\nSteady-State", ha="center", va="center",
-                fontsize=10, fontweight="bold", color="white")
+        # Place "Net Steady-State" label above the bar if it's short
+        if abs(cum) < 3:
+            ax.text(len(items), cum + 0.5, f"${cum:+.1f}M\nNet Steady-State", ha="center",
+                    va="bottom", fontsize=10, fontweight="bold", color=self.config.NAVY_HEX)
+        else:
+            ax.text(len(items), cum/2, f"${cum:+.1f}M\nNet\nSteady-State", ha="center",
+                    va="center", fontsize=10, fontweight="bold", color="white")
         ax.axhline(y=0, color="black", linewidth=0.8)
         labels = [it[0] for it in items] + ["Net Steady-\nState Impact"]
         ax.set_xticks(range(len(labels)))
@@ -831,8 +855,7 @@ class TechChartGenerator:
         tornado, base = self.model.sensitivity()
         tornado = tornado[:6]
         base_m = base / 1_000_000
-        fig, ax = plt.subplots(figsize=(10, 5.5))
-        y_pos = np.arange(len(tornado))
+        fig, ax = plt.subplots(figsize=(12, 5.5))
         for i, t in enumerate(tornado):
             low_m = t["low"] / 1_000_000 - base_m
             high_m = t["high"] / 1_000_000 - base_m
@@ -840,12 +863,28 @@ class TechChartGenerator:
                     height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white",
                     height=0.6, alpha=0.85)
-            ax.text(low_m - 0.4, i, f"${t['low']/1e6:.1f}M", ha="right", va="center", fontsize=9)
-            ax.text(high_m + 0.4, i, f"${t['high']/1e6:.1f}M", ha="left", va="center", fontsize=9)
-        ax.set_yticks(y_pos)
+        # Place labels based on ACTUAL bar direction (handles inverted rows)
+        data_pad = 2.0
+        for i, t in enumerate(tornado):
+            low_m = t["low"] / 1_000_000 - base_m
+            high_m = t["high"] / 1_000_000 - base_m
+            leftmost = min(low_m, high_m)
+            rightmost = max(low_m, high_m)
+            if low_m <= high_m:
+                left_label = f"${t['low']/1e6:.1f}M"
+                right_label = f"${t['high']/1e6:.1f}M"
+            else:
+                left_label = f"${t['high']/1e6:.1f}M"
+                right_label = f"${t['low']/1e6:.1f}M"
+            ax.text(leftmost - data_pad, i, left_label,
+                    ha="right", va="center", fontsize=9, clip_on=False)
+            ax.text(rightmost + data_pad, i, right_label,
+                    ha="left", va="center", fontsize=9, clip_on=False)
+        ax.set_yticks(range(len(tornado)))
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
         ax.invert_yaxis()
         ax.axvline(x=0, color=self.config.NAVY_HEX, linewidth=2)
+        ax.margins(x=0.25)
         ax.set_xlabel(f"Change in 10-Year NPV vs. Base Case (${base_m:.1f}M)", fontsize=10)
         ax.set_title("Sensitivity Tornado — Technology Program NPV",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
