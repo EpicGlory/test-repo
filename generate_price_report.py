@@ -432,12 +432,12 @@ class PriceChartGenerator:
             ax.text(bar.get_x() + bar.get_width()/2, 3,
                     f"${val:.1f}M", ha="center", fontsize=10, fontweight="bold",
                     color="white")
-        # Loss annotations — white text, positioned inside bars near the top
+        # Loss annotations — below all bars at y=30 line, red font for legibility
         for i, s in enumerate(sens):
-            bar_top = values[i+1]
-            ax.text(i+1, bar_top - 3,
+            ax.text(i+1, 30,
                     f"-${s['revenue_loss']/1e6:.1f}M\n({s['pct_of_revenue']*100:.0f}%)",
-                    ha="center", fontsize=9, fontweight="bold", color="white")
+                    ha="center", fontsize=9, fontweight="bold",
+                    color=self.config.RED_HEX, va="top")
         ax.set_title("Commission Revenue Sensitivity to Cattle Price Decline",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.set_ylabel("Annual Commission Revenue ($M)", fontsize=10)
@@ -715,7 +715,7 @@ class PriceChartGenerator:
 
         # --- Legend (top-right, horizontal) ---
         legend_y = top_y + 0.5
-        legend_positions = [8.5, 10.0, 11.5]
+        legend_positions = [7.0, 9.5, 11.5]
         for lx, (label, color) in zip(
             legend_positions,
             [("On Track", self.config.GREEN_HEX),
