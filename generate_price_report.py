@@ -427,16 +427,17 @@ class PriceChartGenerator:
         colors = [self.config.NAVY_HEX] + [self.config.AMBER_HEX if s["decline"] <= 0.2
                   else self.config.RED_HEX for s in sens]
         bars = ax.bar(labels, values, color=colors, edgecolor="white", linewidth=1.5)
+        # Remaining revenue labels — at the BASE of each bar (just above bottom)
         for bar, val in zip(bars, values):
-            # Place value labels INSIDE the bar, offset down from top
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() - 5,
+            ax.text(bar.get_x() + bar.get_width()/2, 3,
                     f"${val:.1f}M", ha="center", fontsize=10, fontweight="bold",
                     color="white")
-        # Loss annotations
+        # Loss annotations — white text, positioned inside bars near the top
         for i, s in enumerate(sens):
-            ax.annotate(f"-${s['revenue_loss']/1e6:.1f}M\n({s['pct_of_revenue']*100:.0f}%)",
-                        xy=(i+1, values[i+1]), xytext=(i+1, values[i+1]-4),
-                        ha="center", fontsize=9, color=self.config.RED_HEX, fontweight="bold")
+            bar_top = values[i+1]
+            ax.text(i+1, bar_top - 3,
+                    f"-${s['revenue_loss']/1e6:.1f}M\n({s['pct_of_revenue']*100:.0f}%)",
+                    ha="center", fontsize=9, fontweight="bold", color="white")
         ax.set_title("Commission Revenue Sensitivity to Cattle Price Decline",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.set_ylabel("Annual Commission Revenue ($M)", fontsize=10)
@@ -655,55 +656,112 @@ class PriceChartGenerator:
 
     # 11. Leading Indicator Scorecard
     def leading_indicators(self):
-        fig, ax = plt.subplots(figsize=(14, 9))
-        ax.set_xlim(0, 13); ax.set_ylim(0, 12)
+        fig, ax = plt.subplots(figsize=(13, 10))
         ax.axis("off")
-        # Legend column positions — shifted left so values sit closer to indicators
-        leg_x = [7.5, 9.2, 11.0]  # On Track, Watch, Action Required
+
+        # --- Data ---
         categories = [
-            ("PRICE RISK INDICATORS", 0.3, 11, self.config.NAVY_HEX, [
+            ("PRICE RISK INDICATORS", self.config.NAVY_HEX, [
                 ("Cattle-on-Feed (% of year ago)", "98%", "GREEN"),
                 ("Placement/Marketing ratio", "1.08", "AMBER"),
                 ("Futures curve (contango/backwardation)", "Backwardation", "AMBER"),
                 ("Fed cattle basis (vs. 5yr avg)", "+$2.10", "GREEN"),
                 ("Packer capacity utilization", "89%", "GREEN"),
             ]),
-            ("MARKET SHARE INDICATORS", 0.3, 6.8, self.config.BLUE_HEX, [
+            ("MARKET SHARE INDICATORS", self.config.BLUE_HEX, [
                 ("YTD transaction volume (vs. plan)", "-3.2%", "AMBER"),
                 ("Member retention rate (12m rolling)", "91%", "AMBER"),
                 ("New member acquisitions (YTD)", "82", "RED"),
                 ("Digital competitor penetration", "32%", "RED"),
             ]),
-            ("GENERATIONAL INDICATORS", 0.3, 3.4, self.config.PURPLE_HEX, [
+            ("GENERATIONAL INDICATORS", self.config.PURPLE_HEX, [
                 ("Avg member age", "58.2", "RED"),
                 ("Young rancher program enrollment", "45", "AMBER"),
                 ("Succession transfers completed (YTD)", "12", "AMBER"),
             ]),
         ]
-        status_map = {"GREEN": 0, "AMBER": 1, "RED": 2}
-        status_colors = {"GREEN": self.config.GREEN_HEX, "AMBER": self.config.AMBER_HEX,
-                         "RED": self.config.RED_HEX}
-        for cat_name, cx, cy, cat_color, indicators in categories:
-            ax.text(cx, cy, cat_name, fontsize=12, fontweight="bold", color=cat_color)
+        status_colors = {
+            "GREEN": self.config.GREEN_HEX,
+            "AMBER": self.config.AMBER_HEX,
+            "RED": self.config.RED_HEX,
+        }
+
+        # --- Layout constants ---
+        row_height = 0.9        # vertical spacing between indicator rows
+        cat_gap = 1.5           # extra vertical gap between category sections
+        dot_x = 0.5             # x position for status dots
+        name_x = 1.0            # x position for indicator names (left-aligned)
+        value_x = 11.0          # x position for values (right-aligned)
+
+        # --- Compute total height ---
+        # Count all rows: each category header = 1 row, each indicator = 1 row
+        # Plus gaps between categories
+        total_rows = 0
+        for _, _, indicators in categories:
+            total_rows += 1  # category header
+            total_rows += len(indicators)
+        num_cat_gaps = len(categories) - 1
+        total_height = total_rows * row_height + num_cat_gaps * cat_gap
+        top_y = total_height + 2.0  # leave room for title + legend at top
+
+        ax.set_xlim(0, 13)
+        ax.set_ylim(0, top_y + 1.5)
+
+        # --- Title ---
+        ax.set_title(
+            "PLMA Leading Indicator Dashboard (Illustrative \u2014 April 2026)",
+            fontsize=14, fontweight="bold", color=self.config.NAVY_HEX, pad=15,
+        )
+
+        # --- Legend (top-right, horizontal) ---
+        legend_y = top_y + 0.5
+        legend_positions = [8.5, 10.0, 11.5]
+        for lx, (label, color) in zip(
+            legend_positions,
+            [("On Track", self.config.GREEN_HEX),
+             ("Watch", self.config.AMBER_HEX),
+             ("Action Required", self.config.RED_HEX)],
+        ):
+            ax.scatter(lx, legend_y, s=140, color=color,
+                       edgecolor="white", linewidth=2, zorder=3)
+            ax.text(lx + 0.4, legend_y, label, fontsize=11, va="center",
+                    fontweight="bold", color=self.config.DARK_GRAY_HEX)
+
+        # --- Draw categories and indicators ---
+        y = top_y  # current y cursor, starts just below legend
+
+        for cat_idx, (cat_name, cat_color, indicators) in enumerate(categories):
+            # Category header
+            ax.text(name_x, y, cat_name, fontsize=12, fontweight="bold",
+                    color=cat_color, va="center")
+            # Thin separator line under the header
+            ax.plot([dot_x, 12.5], [y - 0.35, y - 0.35],
+                    color=cat_color, linewidth=0.8, alpha=0.4)
+
+            # Indicator rows
             for i, (name, value, status) in enumerate(indicators):
-                row_y = cy - 0.85 - i * 0.72
-                ax.scatter(cx + 0.2, row_y, s=130, color=status_colors[status],
+                row_y = y - 0.7 - i * row_height
+                sc = status_colors[status]
+
+                # Status dot
+                ax.scatter(dot_x, row_y, s=140, color=sc,
                            edgecolor="white", linewidth=2, zorder=3)
-                ax.text(cx + 0.6, row_y, name, fontsize=10.5, va="center",
+
+                # Indicator name (left-aligned)
+                ax.text(name_x, row_y, name, fontsize=11, va="center",
                         color=self.config.DARK_GRAY_HEX)
-                # Place value under its status column
-                val_x = leg_x[status_map[status]]
-                ax.text(val_x, row_y, value, fontsize=10.5, va="center", fontweight="bold",
-                        color=status_colors[status], ha="center")
-        ax.set_title("PLMA Leading Indicator Dashboard (Illustrative — April 2026)",
-                     fontsize=14, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
-        # Legend headers at top — aligned with value columns
-        for i, (label, color) in enumerate([("On Track", self.config.GREEN_HEX),
-                                             ("Watch", self.config.AMBER_HEX),
-                                             ("Action Required", self.config.RED_HEX)]):
-            ax.scatter(leg_x[i], 11.8, s=90, color=color, edgecolor="white", linewidth=2)
-            ax.text(leg_x[i], 11.3, label, fontsize=10, ha="center",
-                    color=self.config.DARK_GRAY_HEX, fontweight="bold")
+
+                # Value (right-aligned, in status color, bold)
+                ax.text(value_x, row_y, value, fontsize=11, va="center",
+                        fontweight="bold", color=sc, ha="right")
+
+            # Move cursor down past all rows in this category
+            y = y - 0.7 - (len(indicators) - 1) * row_height
+
+            # Add gap before next category (but not after the last one)
+            if cat_idx < len(categories) - 1:
+                y -= cat_gap
+
         return self._finalize(fig)
 
     # 12. Three Horizons Gantt
@@ -831,18 +889,25 @@ class PriceChartGenerator:
             high_m = t["high"] / 1_000_000 - base_m
             ax.barh(i, low_m, color=self.config.RED_HEX, edgecolor="white", height=0.6, alpha=0.85)
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white", height=0.6, alpha=0.85)
-        # Place labels using data coordinates to ensure they're always outside bars
-        # Find the range to compute a consistent offset in data units
-        data_pad = 2.0  # data units of padding from bar end
+        # Place labels based on ACTUAL bar direction, not variable name
+        # For some variables (discount rate), bars are inverted
+        data_pad = 2.0
         for i, t in enumerate(tornado):
             low_m = t["low"] / 1_000_000 - base_m
             high_m = t["high"] / 1_000_000 - base_m
-            # Place labels outside bars; ensure minimum distance from center
-            label_x_left = min(low_m - data_pad, -data_pad - 1)
-            label_x_right = max(high_m + data_pad, data_pad + 1)
-            ax.text(label_x_left, i, f"${t['low']/1e6:.1f}M",
+            # Determine which bar end is leftmost and rightmost
+            leftmost = min(low_m, high_m)
+            rightmost = max(low_m, high_m)
+            # Assign labels to the correct side based on bar direction
+            if low_m <= high_m:
+                left_label = f"${t['low']/1e6:.1f}M"
+                right_label = f"${t['high']/1e6:.1f}M"
+            else:
+                left_label = f"${t['high']/1e6:.1f}M"
+                right_label = f"${t['low']/1e6:.1f}M"
+            ax.text(leftmost - data_pad, i, left_label,
                     ha="right", va="center", fontsize=9, clip_on=False)
-            ax.text(label_x_right, i, f"${t['high']/1e6:.1f}M",
+            ax.text(rightmost + data_pad, i, right_label,
                     ha="left", va="center", fontsize=9, clip_on=False)
         ax.set_yticks(range(len(tornado)))
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
