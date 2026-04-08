@@ -428,9 +428,10 @@ class PriceChartGenerator:
                   else self.config.RED_HEX for s in sens]
         bars = ax.bar(labels, values, color=colors, edgecolor="white", linewidth=1.5)
         for bar, val in zip(bars, values):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+            # Place value labels INSIDE the bar, offset down from top
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() - 5,
                     f"${val:.1f}M", ha="center", fontsize=10, fontweight="bold",
-                    color=self.config.DARK_GRAY_HEX)
+                    color="white")
         # Loss annotations
         for i, s in enumerate(sens):
             ax.annotate(f"-${s['revenue_loss']/1e6:.1f}M\n({s['pct_of_revenue']*100:.0f}%)",
@@ -654,11 +655,11 @@ class PriceChartGenerator:
 
     # 11. Leading Indicator Scorecard
     def leading_indicators(self):
-        fig, ax = plt.subplots(figsize=(14, 8))
-        ax.set_xlim(0, 14); ax.set_ylim(0, 12)
+        fig, ax = plt.subplots(figsize=(14, 9))
+        ax.set_xlim(0, 13); ax.set_ylim(0, 12)
         ax.axis("off")
-        # Legend column positions — values will align under these
-        leg_x = [9.5, 11.0, 12.5]  # On Track, Watch, Action Required
+        # Legend column positions — shifted left so values sit closer to indicators
+        leg_x = [7.5, 9.2, 11.0]  # On Track, Watch, Action Required
         categories = [
             ("PRICE RISK INDICATORS", 0.3, 11, self.config.NAVY_HEX, [
                 ("Cattle-on-Feed (% of year ago)", "98%", "GREEN"),
@@ -683,25 +684,25 @@ class PriceChartGenerator:
         status_colors = {"GREEN": self.config.GREEN_HEX, "AMBER": self.config.AMBER_HEX,
                          "RED": self.config.RED_HEX}
         for cat_name, cx, cy, cat_color, indicators in categories:
-            ax.text(cx, cy, cat_name, fontsize=11, fontweight="bold", color=cat_color)
+            ax.text(cx, cy, cat_name, fontsize=12, fontweight="bold", color=cat_color)
             for i, (name, value, status) in enumerate(indicators):
-                row_y = cy - 0.8 - i * 0.65
-                ax.scatter(cx + 0.2, row_y, s=120, color=status_colors[status],
+                row_y = cy - 0.85 - i * 0.72
+                ax.scatter(cx + 0.2, row_y, s=130, color=status_colors[status],
                            edgecolor="white", linewidth=2, zorder=3)
-                ax.text(cx + 0.6, row_y, name, fontsize=9, va="center",
+                ax.text(cx + 0.6, row_y, name, fontsize=10.5, va="center",
                         color=self.config.DARK_GRAY_HEX)
                 # Place value under its status column
                 val_x = leg_x[status_map[status]]
-                ax.text(val_x, row_y, value, fontsize=9, va="center", fontweight="bold",
+                ax.text(val_x, row_y, value, fontsize=10.5, va="center", fontweight="bold",
                         color=status_colors[status], ha="center")
         ax.set_title("PLMA Leading Indicator Dashboard (Illustrative — April 2026)",
-                     fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
+                     fontsize=14, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         # Legend headers at top — aligned with value columns
         for i, (label, color) in enumerate([("On Track", self.config.GREEN_HEX),
                                              ("Watch", self.config.AMBER_HEX),
                                              ("Action Required", self.config.RED_HEX)]):
-            ax.scatter(leg_x[i], 11.8, s=80, color=color, edgecolor="white", linewidth=2)
-            ax.text(leg_x[i], 11.35, label, fontsize=8, ha="center",
+            ax.scatter(leg_x[i], 11.8, s=90, color=color, edgecolor="white", linewidth=2)
+            ax.text(leg_x[i], 11.3, label, fontsize=10, ha="center",
                     color=self.config.DARK_GRAY_HEX, fontweight="bold")
         return self._finalize(fig)
 
@@ -723,22 +724,18 @@ class PriceChartGenerator:
             ("Platform revenue (data, advisory)", 60, 120, self.config.AMBER_HEX),
         ]
         fig, ax = plt.subplots(figsize=(14, 7))
-        # Approximate chars that fit per month of bar width at fontsize 9
-        chars_per_month = 1.8  # ~1.8 characters fit per month of bar width
         for i, (name, start, end, color) in enumerate(workstreams):
             bar_width = end - start
             ax.barh(i, bar_width, left=start, color=color, edgecolor="white",
                     linewidth=1.5, height=0.7)
-            max_chars = int(bar_width * chars_per_month)
-            text_color = self.config.NAVY_HEX if color == self.config.AMBER_HEX else "white"
-            if len(name) <= max_chars:
-                # Text fits inside bar
+            if color == self.config.AMBER_HEX:
+                # Horizon 3: long bars — text inside, dark blue font
                 ax.text(start + bar_width/2, i, name, ha="center", va="center",
-                        fontsize=9, color=text_color, fontweight="bold")
+                        fontsize=9, color=self.config.NAVY_HEX, fontweight="bold")
             else:
-                # Text too long — place outside to the right in bar color
+                # Horizon 1 & 2: text OUTSIDE to the right, dark blue font
                 ax.text(end + 1, i, name, ha="left", va="center",
-                        fontsize=9, color=color, fontweight="bold")
+                        fontsize=9, color=self.config.NAVY_HEX, fontweight="bold")
         ax.axvline(x=12, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=60, color=self.config.DARK_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(6, len(workstreams)+0.3, "HORIZON 1\n(Year 1)", ha="center",
@@ -748,7 +745,7 @@ class PriceChartGenerator:
         ax.text(90, len(workstreams)+0.3, "HORIZON 3\n(Years 6-10)", ha="center",
                 fontsize=10, fontweight="bold", color=self.config.AMBER_HEX)
         ax.set_yticks([]); ax.set_xlabel("Months from Inception", fontsize=10)
-        ax.set_xlim(0, 140); ax.set_ylim(-0.8, len(workstreams)+1.2)
+        ax.set_xlim(0, 130); ax.set_ylim(-0.8, len(workstreams)+1.2)
         ax.set_title("Price & Market Position Roadmap — Three Horizons",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=25)
         ax.grid(True, axis="x", alpha=0.3); ax.set_axisbelow(True)
@@ -836,16 +833,16 @@ class PriceChartGenerator:
             ax.barh(i, high_m, color=self.config.GREEN_HEX, edgecolor="white", height=0.6, alpha=0.85)
         # Place labels using data coordinates to ensure they're always outside bars
         # Find the range to compute a consistent offset in data units
-        all_lows = [(t["low"]/1e6 - base_m) for t in tornado]
-        all_highs = [(t["high"]/1e6 - base_m) for t in tornado]
-        data_pad = 1.5  # data units of padding from bar end
+        data_pad = 2.0  # data units of padding from bar end
         for i, t in enumerate(tornado):
             low_m = t["low"] / 1_000_000 - base_m
             high_m = t["high"] / 1_000_000 - base_m
-            # Label always placed data_pad units outside the bar end
-            ax.text(low_m - data_pad, i, f"${t['low']/1e6:.1f}M",
+            # Place labels outside bars; ensure minimum distance from center
+            label_x_left = min(low_m - data_pad, -data_pad - 1)
+            label_x_right = max(high_m + data_pad, data_pad + 1)
+            ax.text(label_x_left, i, f"${t['low']/1e6:.1f}M",
                     ha="right", va="center", fontsize=9, clip_on=False)
-            ax.text(high_m + data_pad, i, f"${t['high']/1e6:.1f}M",
+            ax.text(label_x_right, i, f"${t['high']/1e6:.1f}M",
                     ha="left", va="center", fontsize=9, clip_on=False)
         ax.set_yticks(range(len(tornado)))
         ax.set_yticklabels([t["variable"] for t in tornado], fontsize=10)
