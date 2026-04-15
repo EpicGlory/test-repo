@@ -525,17 +525,32 @@ class TechChartGenerator:
         }
         fig, ax = plt.subplots(figsize=(12, 8))
         _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85)
-        for idx, u in enumerate(uc):
+        # Explicit offsets per use case (chosen to alternate above/below by x position,
+        # avoid label collisions, and keep Blockchain label above its dot to clear the legend)
+        offsets = {
+            "Blockchain Provenance": 18,     # above (avoid legend)
+            "Computer Vision Grading": -16,  # below
+            "Digital Auction Platform": 18,  # above
+            "EID/IoT Traceability": -16,     # below
+            "Price Prediction Models": 18,   # above (y=9, well clear)
+            "Demand Forecasting": -16,       # below (y=8)
+            "Data Lakehouse": -16,           # below (y=7)
+            "ML Credit Scoring": 18,         # above (y=9)
+            "Cyber Zero-Trust": -16,         # below (y=8)
+            "GenAI Member Service": 18,      # above (y=7)
+            "GenAI Doc Processing": 18,      # above (y=8)
+            "RPA — AR/AP Automation": -16,   # below (y=7)
+        }
+        for u in uc:
             ax.scatter(u["feasibility"], u["value"],
                        s=u["nb_pv"]*180, c=cat_colors[u["category"]],
                        edgecolor="white", linewidth=2, alpha=0.85, zorder=3)
-            # Alternate labels above and below dots
-            dy = 14 if idx % 2 == 0 else -14
+            dy = offsets.get(u["name"], 14)
             ax.annotate(u["name"], (u["feasibility"], u["value"]),
                         xytext=(0, dy), textcoords="offset points", fontsize=8.5,
                         ha="center", va="bottom" if dy > 0 else "top",
                         color=self.config.DARK_GRAY_HEX, fontweight="bold",
-                        bbox=_bbox)
+                        bbox=_bbox, zorder=5)
         # Quadrant lines
         ax.axhline(y=7, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=7, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
@@ -553,9 +568,9 @@ class TechChartGenerator:
         ax.set_title("AI & Tech Use Case Prioritization (bubble = 10-yr NPV $M)",
                      fontsize=13, fontweight="bold", color=self.config.NAVY_HEX, pad=15)
         ax.grid(True, alpha=0.3)
-        # Category legend
+        # Category legend — placed in lower-right (QUICK WINS has fewer dots at bottom)
         patches = [mpatches.Patch(color=c, label=cat) for cat, c in cat_colors.items()]
-        ax.legend(handles=patches, loc="lower left", fontsize=8, frameon=True,
+        ax.legend(handles=patches, loc="lower right", fontsize=8, frameon=True,
                   ncol=2, framealpha=0.95)
         return self._finalize(fig)
 
