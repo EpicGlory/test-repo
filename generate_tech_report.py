@@ -609,38 +609,46 @@ class TechChartGenerator:
     def tech_portfolio_2x2(self):
         fig, ax = plt.subplots(figsize=(11, 8))
         # Custom per-tech offsets (dx, dy) to prevent overlap
+        # (name, impact=y, feasibility=x, color, offset_points, ha)
+        # Stagger above/below with horizontal shifts where dots coincide (9,8 pair)
         techs = [
-            ("Cybersecurity (Zero Trust)", 9, 8, self.config.RED_HEX, (0, 14)),
-            ("Cloud/Data Platform", 9, 7, self.config.NAVY_HEX, (0, -16)),
-            ("GenAI Back-office", 8, 9, self.config.BLUE_HEX, (0, 14)),
-            ("ML Credit Scoring", 9, 8, self.config.NAVY_HEX, (0, -16)),
-            ("Digital Auction Platform", 9, 5, self.config.PURPLE_HEX, (0, -16)),
-            ("RPA", 7, 9, self.config.GREEN_HEX, (0, -16)),
-            ("Computer Vision", 7, 4, self.config.BLUE_HEX, (0, 14)),
-            ("IoT/EID", 6, 5, self.config.AMBER_HEX, (0, 14)),
-            ("Blockchain", 4, 3, self.config.MID_GRAY_HEX, (0, -16)),
-            ("Metaverse/AR", 2, 3, self.config.MID_GRAY_HEX, (0, 14)),
+            ("Cybersecurity (Zero Trust)", 9, 8, self.config.RED_HEX, (0, 32), "center"),
+            ("ML Credit Scoring",          9, 8, self.config.NAVY_HEX, (-55, 14), "right"),
+            ("Cloud/Data Platform",        9, 7, self.config.NAVY_HEX, (55, 0), "left"),
+            ("GenAI Back-office",          8, 9, self.config.BLUE_HEX, (0, -16), "center"),
+            ("Digital Auction Platform",   9, 5, self.config.PURPLE_HEX, (0, -16), "center"),
+            ("RPA",                        7, 9, self.config.GREEN_HEX, (55, 0), "left"),
+            ("Computer Vision",            7, 4, self.config.BLUE_HEX, (0, 14), "center"),
+            ("IoT/EID",                    6, 5, self.config.AMBER_HEX, (0, 14), "center"),
+            ("Blockchain",                 4, 3, self.config.MID_GRAY_HEX, (0, -16), "center"),
+            ("Metaverse/AR",               2, 3, self.config.MID_GRAY_HEX, (0, 14), "center"),
         ]
         _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85)
-        for name, impact, feasibility, color, offset in techs:
+        for name, impact, feasibility, color, offset, ha in techs:
             ax.scatter(feasibility, impact, s=300, c=color, edgecolor="white",
                        linewidth=2, alpha=0.85, zorder=3)
             dy = offset[1]
+            if dy > 0:
+                va = "bottom"
+            elif dy < 0:
+                va = "top"
+            else:
+                va = "center"
             ax.annotate(name, (feasibility, impact), xytext=offset,
-                        textcoords="offset points", fontsize=8.5, ha="center",
-                        va="bottom" if dy > 0 else "top",
-                        color=self.config.DARK_GRAY_HEX, fontweight="bold", bbox=_bbox)
+                        textcoords="offset points", fontsize=8.5, ha=ha, va=va,
+                        color=self.config.DARK_GRAY_HEX, fontweight="bold",
+                        bbox=_bbox, zorder=5)
         ax.axhline(y=5.5, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=5.5, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
-        ax.text(8, 9.8, "INVEST NOW", fontsize=11, fontweight="bold",
-                color=self.config.GREEN_HEX, ha="center")
-        ax.text(3, 9.8, "STRATEGIC BETS", fontsize=10, fontweight="bold",
-                color=self.config.AMBER_HEX, ha="center")
+        ax.text(10.8, 10.4, "INVEST NOW", fontsize=11, fontweight="bold",
+                color=self.config.GREEN_HEX, ha="right")
+        ax.text(0.2, 10.4, "STRATEGIC BETS", fontsize=10, fontweight="bold",
+                color=self.config.AMBER_HEX, ha="left")
         ax.text(8, 1.2, "QUICK WINS", fontsize=10, fontweight="bold",
                 color=self.config.BLUE_HEX, ha="center")
         ax.text(3, 1.2, "MONITOR / DEFER", fontsize=10, fontweight="bold",
                 color=self.config.RED_HEX, ha="center")
-        ax.set_xlim(0, 10); ax.set_ylim(0, 10)
+        ax.set_xlim(0, 11); ax.set_ylim(0, 10.8)
         ax.set_xlabel("Feasibility (technical + organizational readiness)",
                       fontsize=11, fontweight="bold")
         ax.set_ylabel("Strategic Impact",
