@@ -614,7 +614,7 @@ class TechChartGenerator:
         # their dots cluster tightly at y=9
         techs = [
             # Cluster — labels placed in data coords with arrows
-            ("Cybersecurity (Zero Trust)", 9, 8.2, self.config.RED_HEX, (9.8, 10.3), "center", True),
+            ("Cybersecurity (Zero Trust)", 9, 8.2, self.config.RED_HEX, (9.8, 9.7), "center", True),
             ("ML Credit Scoring",          9, 7.8, self.config.NAVY_HEX, (6.2, 7.5), "center", True),
             ("Cloud/Data Platform",        9, 7.0, self.config.NAVY_HEX, (5.5, 10.3), "center", True),
             # Other techs — simple point offsets
