@@ -608,37 +608,48 @@ class TechChartGenerator:
     # 8. Tech portfolio 2x2
     def tech_portfolio_2x2(self):
         fig, ax = plt.subplots(figsize=(11, 8))
-        # Custom per-tech offsets (dx, dy) to prevent overlap
-        # (name, impact=y, feasibility=x, color, offset_points, ha)
-        # Cybersecurity and ML Credit Scoring both at (8, 9) — jitter ML Credit
-        # Scoring's x-position so both dots are visible side-by-side
+        # (name, impact=y, feasibility=x, color, xytext_data, ha, use_arrow)
+        # The three INVEST NOW items (Cloud/Data, ML Credit Scoring, Cybersecurity)
+        # use explicit data-coordinate label positions with leader-line arrows since
+        # their dots cluster tightly at y=9
         techs = [
-            ("Cybersecurity (Zero Trust)", 9, 8.2, self.config.RED_HEX, (0, 32), "center"),
-            ("ML Credit Scoring",          9, 7.8, self.config.NAVY_HEX, (-15, -18), "right"),
-            ("Cloud/Data Platform",        9, 7, self.config.NAVY_HEX, (15, 0), "left"),
-            ("GenAI Back-office",          8, 9, self.config.BLUE_HEX, (0, -16), "center"),
-            ("Digital Auction Platform",   9, 5, self.config.PURPLE_HEX, (0, -16), "center"),
-            ("RPA",                        7, 9, self.config.GREEN_HEX, (15, 0), "left"),
-            ("Computer Vision",            7, 4, self.config.BLUE_HEX, (0, 14), "center"),
-            ("IoT/EID",                    6, 5, self.config.AMBER_HEX, (0, 14), "center"),
-            ("Blockchain",                 4, 3, self.config.MID_GRAY_HEX, (0, -16), "center"),
-            ("Metaverse/AR",               2, 3, self.config.MID_GRAY_HEX, (0, 14), "center"),
+            # Cluster — labels placed in data coords with arrows
+            ("Cybersecurity (Zero Trust)", 9, 8.2, self.config.RED_HEX, (9.8, 10.3), "center", True),
+            ("ML Credit Scoring",          9, 7.8, self.config.NAVY_HEX, (8.5, 7.3), "center", True),
+            ("Cloud/Data Platform",        9, 7.0, self.config.NAVY_HEX, (5.5, 10.3), "center", True),
+            # Other techs — simple point offsets
+            ("GenAI Back-office",          8, 9, self.config.BLUE_HEX, (0, -16), "center", False),
+            ("Digital Auction Platform",   9, 5, self.config.PURPLE_HEX, (0, -16), "center", False),
+            ("RPA",                        7, 9, self.config.GREEN_HEX, (15, 0), "left", False),
+            ("Computer Vision",            7, 4, self.config.BLUE_HEX, (0, 14), "center", False),
+            ("IoT/EID",                    6, 5, self.config.AMBER_HEX, (0, 14), "center", False),
+            ("Blockchain",                 4, 3, self.config.MID_GRAY_HEX, (0, -16), "center", False),
+            ("Metaverse/AR",               2, 3, self.config.MID_GRAY_HEX, (0, 14), "center", False),
         ]
         _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85)
-        for name, impact, feasibility, color, offset, ha in techs:
+        for name, impact, feasibility, color, offset, ha, use_arrow in techs:
             ax.scatter(feasibility, impact, s=300, c=color, edgecolor="white",
                        linewidth=2, alpha=0.85, zorder=3)
-            dy = offset[1]
-            if dy > 0:
-                va = "bottom"
-            elif dy < 0:
-                va = "top"
+            if use_arrow:
+                # Label at explicit data coordinates with a leader line
+                ax.annotate(name, xy=(feasibility, impact), xytext=offset,
+                            fontsize=8.5, ha=ha, va="center",
+                            color=self.config.DARK_GRAY_HEX, fontweight="bold",
+                            bbox=_bbox, zorder=5,
+                            arrowprops=dict(arrowstyle="-", color=color, lw=1.2,
+                                            shrinkA=3, shrinkB=8))
             else:
-                va = "center"
-            ax.annotate(name, (feasibility, impact), xytext=offset,
-                        textcoords="offset points", fontsize=8.5, ha=ha, va=va,
-                        color=self.config.DARK_GRAY_HEX, fontweight="bold",
-                        bbox=_bbox, zorder=5)
+                dy = offset[1]
+                if dy > 0:
+                    va = "bottom"
+                elif dy < 0:
+                    va = "top"
+                else:
+                    va = "center"
+                ax.annotate(name, (feasibility, impact), xytext=offset,
+                            textcoords="offset points", fontsize=8.5, ha=ha, va=va,
+                            color=self.config.DARK_GRAY_HEX, fontweight="bold",
+                            bbox=_bbox, zorder=5)
         ax.axhline(y=5.5, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=5.5, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.text(10.8, 10.4, "INVEST NOW", fontsize=11, fontweight="bold",
