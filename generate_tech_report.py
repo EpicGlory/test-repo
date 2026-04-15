@@ -610,14 +610,15 @@ class TechChartGenerator:
         fig, ax = plt.subplots(figsize=(11, 8))
         # Custom per-tech offsets (dx, dy) to prevent overlap
         # (name, impact=y, feasibility=x, color, offset_points, ha)
-        # Stagger above/below with horizontal shifts where dots coincide (9,8 pair)
+        # Cybersecurity and ML Credit Scoring both at (8, 9) — jitter ML Credit
+        # Scoring's x-position so both dots are visible side-by-side
         techs = [
-            ("Cybersecurity (Zero Trust)", 9, 8, self.config.RED_HEX, (0, 32), "center"),
-            ("ML Credit Scoring",          9, 8, self.config.NAVY_HEX, (-55, 14), "right"),
-            ("Cloud/Data Platform",        9, 7, self.config.NAVY_HEX, (55, 0), "left"),
+            ("Cybersecurity (Zero Trust)", 9, 8.2, self.config.RED_HEX, (0, 32), "center"),
+            ("ML Credit Scoring",          9, 7.8, self.config.NAVY_HEX, (-15, -18), "right"),
+            ("Cloud/Data Platform",        9, 7, self.config.NAVY_HEX, (15, 0), "left"),
             ("GenAI Back-office",          8, 9, self.config.BLUE_HEX, (0, -16), "center"),
             ("Digital Auction Platform",   9, 5, self.config.PURPLE_HEX, (0, -16), "center"),
-            ("RPA",                        7, 9, self.config.GREEN_HEX, (55, 0), "left"),
+            ("RPA",                        7, 9, self.config.GREEN_HEX, (15, 0), "left"),
             ("Computer Vision",            7, 4, self.config.BLUE_HEX, (0, 14), "center"),
             ("IoT/EID",                    6, 5, self.config.AMBER_HEX, (0, 14), "center"),
             ("Blockchain",                 4, 3, self.config.MID_GRAY_HEX, (0, -16), "center"),
