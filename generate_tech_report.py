@@ -615,7 +615,7 @@ class TechChartGenerator:
         techs = [
             # Cluster — labels placed in data coords with arrows
             ("Cybersecurity (Zero Trust)", 9, 8.2, self.config.RED_HEX, (9.8, 10.3), "center", True),
-            ("ML Credit Scoring",          9, 7.8, self.config.NAVY_HEX, (8.5, 7.3), "center", True),
+            ("ML Credit Scoring",          9, 7.8, self.config.NAVY_HEX, (6.2, 7.5), "center", True),
             ("Cloud/Data Platform",        9, 7.0, self.config.NAVY_HEX, (5.5, 10.3), "center", True),
             # Other techs — simple point offsets
             ("GenAI Back-office",          8, 9, self.config.BLUE_HEX, (0, -16), "center", False),
