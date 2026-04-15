@@ -487,14 +487,18 @@ class PriceChartGenerator:
         ax1.set_ylabel("Number of Livestock Auction Markets", fontsize=10,
                        color=self.config.NAVY_HEX)
         ax1.tick_params(axis="y", labelcolor=self.config.NAVY_HEX)
-        for bar, val in zip(bars, auctions):
-            ax1.text(bar.get_x()+bar.get_width()/2, bar.get_height()+15, str(val),
-                     ha="center", fontsize=9, fontweight="bold",
-                     color=self.config.DARK_GRAY_HEX, zorder=10,
-                     bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.75, ec="none"))
         ax2 = ax1.twinx()
         ax2.plot(years, digital_pct, color=self.config.RED_HEX, linewidth=3, marker="s",
-                 markersize=8, label="Digital/video market share (%)")
+                 markersize=8, label="Digital/video market share (%)", zorder=3)
+        # Draw bar value labels on ax2 with ax1's data coordinates — ensures they
+        # render on top of the red line (twinx draws ax2 on top of ax1)
+        for bar, val in zip(bars, auctions):
+            ax2.annotate(str(val),
+                         xy=(bar.get_x() + bar.get_width()/2, bar.get_height() + 15),
+                         xycoords=ax1.transData,
+                         ha="center", fontsize=9, fontweight="bold",
+                         color=self.config.DARK_GRAY_HEX, zorder=20,
+                         bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.9, ec="none"))
         ax2.set_ylabel("Digital/Video Market Share (%)", fontsize=10, color=self.config.RED_HEX)
         ax2.tick_params(axis="y", labelcolor=self.config.RED_HEX)
         ax2.spines["top"].set_visible(False)
