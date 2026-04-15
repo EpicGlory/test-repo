@@ -730,7 +730,7 @@ class TechChartGenerator:
         techs = [
             ("Agentic AI", 1.3, 4.8, self.config.RED_HEX, 0.5, 5.8),
             ("GenAI (Enterprise)", 2.2, 4.3, self.config.RED_HEX, 3.2, 5.0),
-            ("Blockchain (Ag)", 4.0, -0.3, self.config.AMBER_HEX, 4.0, -1.3),
+            ("Blockchain (Ag)", 4.0, -0.3, self.config.AMBER_HEX, 3.2, 0.6),
             ("Computer Vision\n(Livestock)", 5.2, 0.8, self.config.AMBER_HEX, 4.2, 1.8),
             ("IoT/EID", 6.8, 2.4, self.config.GREEN_HEX, 6.0, 1.4),
             ("RPA", 8.5, 3.2, self.config.GREEN_HEX, 9.5, 2.5),
