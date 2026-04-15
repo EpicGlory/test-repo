@@ -489,7 +489,9 @@ class PriceChartGenerator:
         ax1.tick_params(axis="y", labelcolor=self.config.NAVY_HEX)
         for bar, val in zip(bars, auctions):
             ax1.text(bar.get_x()+bar.get_width()/2, bar.get_height()+15, str(val),
-                     ha="center", fontsize=9, fontweight="bold", color=self.config.DARK_GRAY_HEX)
+                     ha="center", fontsize=9, fontweight="bold",
+                     color=self.config.DARK_GRAY_HEX, zorder=10,
+                     bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.75, ec="none"))
         ax2 = ax1.twinx()
         ax2.plot(years, digital_pct, color=self.config.RED_HEX, linewidth=3, marker="s",
                  markersize=8, label="Digital/video market share (%)")
