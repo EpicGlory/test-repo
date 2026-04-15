@@ -525,21 +525,25 @@ class TechChartGenerator:
         }
         fig, ax = plt.subplots(figsize=(12, 8))
         _bbox = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85)
-        # Explicit offsets per use case (chosen to alternate above/below by x position,
-        # avoid label collisions, and keep Blockchain label above its dot to clear the legend)
+        # Explicit offsets per use case — ZIGZAG pattern (far/near above/below)
+        # at same Y-row to prevent horizontal label collisions
         offsets = {
-            "Blockchain Provenance": 18,     # above (avoid legend)
-            "Computer Vision Grading": -16,  # below
-            "Digital Auction Platform": 18,  # above
-            "EID/IoT Traceability": -16,     # below
-            "Price Prediction Models": 18,   # above (y=9, well clear)
-            "Demand Forecasting": -16,       # below (y=8)
-            "Data Lakehouse": -16,           # below (y=7)
-            "ML Credit Scoring": 18,         # above (y=9)
-            "Cyber Zero-Trust": -16,         # below (y=8)
-            "GenAI Member Service": 18,      # above (y=7)
-            "GenAI Doc Processing": 18,      # above (y=8)
-            "RPA — AR/AP Automation": -16,   # below (y=7)
+            # Top row y=9 (value=9): zigzag above at 34/16/34
+            "Digital Auction Platform": 34,  # far above
+            "Price Prediction Models": 16,   # near above
+            "ML Credit Scoring": 34,         # far above
+            # Middle row y=8 (value=8): zigzag
+            "Computer Vision Grading": -16,  # below (isolated left)
+            "Demand Forecasting": -16,       # below near
+            "Cyber Zero-Trust": -34,         # below far
+            "GenAI Doc Processing": 16,      # above (right edge)
+            # Lower row y=7 (value=7): zigzag
+            "EID/IoT Traceability": -16,     # below near
+            "Data Lakehouse": -34,           # below far
+            "GenAI Member Service": -16,     # below near
+            "RPA — AR/AP Automation": -34,   # below far
+            # Isolated bottom-left
+            "Blockchain Provenance": 18,     # above (clears legend)
         }
         for u in uc:
             ax.scatter(u["feasibility"], u["value"],
@@ -554,15 +558,15 @@ class TechChartGenerator:
         # Quadrant lines
         ax.axhline(y=7, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
         ax.axvline(x=7, color=self.config.MID_GRAY_HEX, linestyle="--", alpha=0.5)
-        ax.text(8.5, 9.7, "DO FIRST", fontsize=11, fontweight="bold",
-                color=self.config.GREEN_HEX, ha="center")
-        ax.text(5.5, 9.7, "STRATEGIC\nBETS", fontsize=10, fontweight="bold",
-                color=self.config.AMBER_HEX, ha="center")
+        ax.text(9.8, 10.8, "DO FIRST", fontsize=11, fontweight="bold",
+                color=self.config.GREEN_HEX, ha="right")
+        ax.text(3.2, 10.8, "STRATEGIC BETS", fontsize=10, fontweight="bold",
+                color=self.config.AMBER_HEX, ha="left")
         ax.text(8.5, 5.5, "QUICK WINS", fontsize=10, fontweight="bold",
                 color=self.config.BLUE_HEX, ha="center")
         ax.text(5.5, 5.5, "DEFER", fontsize=10, fontweight="bold",
                 color=self.config.RED_HEX, ha="center")
-        ax.set_xlim(3, 10.5); ax.set_ylim(4, 10.5)
+        ax.set_xlim(3, 10.5); ax.set_ylim(4, 11.2)
         ax.set_xlabel("Feasibility (1–10)", fontsize=11, fontweight="bold")
         ax.set_ylabel("Strategic Value (1–10)", fontsize=11, fontweight="bold")
         ax.set_title("AI & Tech Use Case Prioritization (bubble = 10-yr NPV $M)",
