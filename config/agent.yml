@@ -1,0 +1,40 @@
+# Top-level agent settings. Edit and commit to change behavior.
+
+# DRY RUN: when true, no real trash/star/draft/SMS — only labels things
+# `auto/would-trash`, `auto/would-star`, `auto/would-draft`. Summary email
+# and SMS are still sent (marked DRYRUN) so you can verify the pipeline.
+# Flip to false after the 5-day dry-run period.
+dry_run: true
+
+# Hard daily ceiling on Anthropic API spend in USD. The script tracks
+# token usage per run and bails if today's total would exceed this.
+daily_spend_cap_usd: 1.00
+
+# Anthropic model used for classification + drafting.
+anthropic_model: "claude-sonnet-4-6"
+
+# How many interview slot options to propose per draft.
+interview_slot_options: 3
+
+# Buffer minutes between calendar events when proposing slots.
+interview_buffer_minutes: 30
+
+# Default duration of proposed interview slots.
+interview_slot_minutes: 30
+
+# Cap on how far ahead to search for available interview slots.
+interview_search_days_ahead: 14
+
+# First-run lookback window in hours (only used the very first time
+# the agent runs against a fresh state file).
+first_run_lookback_hours: 24
+
+# Maximum recent message IDs to remember for de-duplication.
+processed_id_cache_size: 1000
+
+# SMS digest cap (bytes; Verizon vtext.com truncates beyond ~160).
+sms_max_bytes: 160
+
+# Hard cap on processed messages per single run (safety net for
+# avalanches like a mailing list flood).
+max_messages_per_run: 200

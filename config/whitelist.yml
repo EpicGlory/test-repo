@@ -1,0 +1,60 @@
+# Senders that must NEVER be auto-trashed, regardless of classifier output.
+# Use either full email addresses or `*@domain.com` wildcards.
+# Edit freely — this file is a starting seed; the agent also auto-learns
+# senders you rescue from trash (see state/learned_whitelist.json).
+
+domains:
+  # Banks / financial
+  - "*@chase.com"
+  - "*@bankofamerica.com"
+  - "*@wellsfargo.com"
+  - "*@discover.com"
+  - "*@americanexpress.com"
+  - "*@capitalone.com"
+  - "*@usbank.com"
+  - "*@ally.com"
+  - "*@fidelity.com"
+  - "*@vanguard.com"
+  - "*@schwab.com"
+  - "*@paypal.com"
+  - "*@venmo.com"
+  - "*@stripe.com"
+
+  # Government
+  - "*@irs.gov"
+  - "*@ssa.gov"
+  - "*@usps.com"
+  - "*@utah.gov"
+  - "*@dmv.utah.gov"
+
+  # Universities + employer-related
+  - "*@utah.edu"
+  - "*@hsc.utah.edu"
+  - "*@umail.utah.edu"
+
+  # Shipping
+  - "*@ups.com"
+  - "*@fedex.com"
+  - "*@dhl.com"
+  - "*@amazon.com"
+
+  # Document signing / legal
+  - "*@docusign.net"
+  - "*@adobesign.com"
+  - "*@hellosign.com"
+
+  # Identity / security from major providers
+  - "*@accounts.google.com"
+  - "*@apple.com"
+  - "*@id.apple.com"
+  - "*@microsoft.com"
+  - "*@account.microsoft.com"
+
+  # GitHub / dev infra
+  - "noreply@github.com"
+  - "*@github.com"
+
+addresses: []
+  # Add specific people here, e.g.:
+  # - "doctor@some-clinic.com"
+  # - "landlord@gmail.com"

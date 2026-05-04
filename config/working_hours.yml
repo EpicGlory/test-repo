@@ -1,0 +1,17 @@
+# Local timezone for all schedule decisions.
+timezone: "America/Denver"
+
+# Days the agent is allowed to send SMS digests (1=Mon ... 7=Sun).
+sms_days: [1, 2, 3, 4, 5]
+
+# Local hours (24h) at which the agent runs full processing + SMS digest.
+sms_hours: [9, 12, 15, 18]
+
+# Local hour at which the morning summary email is sent (every day).
+morning_email_hour: 7
+
+# Interview proposal window (local time, weekdays only).
+interview_window:
+  earliest_hour: 9
+  latest_hour: 16
+  weekdays_only: true

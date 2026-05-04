@@ -1,0 +1,75 @@
+name: gmail-auto-agent
+
+on:
+  schedule:
+    # Every 30 minutes. The script self-checks the Mountain Time hour
+    # and decides whether to run security-only, full processing, or
+    # send the morning summary email. Cron is UTC; script handles DST.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Manual run mode"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - security_only
+          - full
+          - morning_summary
+          - sms_test
+
+concurrency:
+  group: gmail-auto-agent
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/gmail-auto-agent-HmlFk
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run agent
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMS_TO: ${{ secrets.SMS_TO }}
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          MANUAL_MODE: ${{ inputs.mode }}
+        run: python -m agent.main
+
+      - name: Commit state changes
+        run: |
+          git config user.name "gmail-auto-agent[bot]"
+          git config user.email "gmail-auto-agent[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain state/)" ]]; then
+            git add state/
+            git commit -m "chore(state): update last_run + learned_whitelist [skip ci]"
+            git push origin claude/gmail-auto-agent-HmlFk
+          fi
+        env:
+          GIT_AUTHOR_NAME: gmail-auto-agent[bot]
+          GIT_AUTHOR_EMAIL: gmail-auto-agent[bot]@users.noreply.github.com
+
+      - name: Set log retention
+        if: always()
+        run: echo "Workflow logs auto-expire per repo settings (default 90d; configure in Settings - Actions if you want 30d)."
