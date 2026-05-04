@@ -47,8 +47,6 @@ class Whitelist:
 @dataclass
 class AgentConfig:
     dry_run: bool
-    daily_spend_cap_usd: float
-    anthropic_model: str
     interview_slot_options: int
     interview_buffer_minutes: int
     interview_slot_minutes: int
@@ -60,12 +58,10 @@ class AgentConfig:
 
     working_hours: WorkingHours
     whitelist: Whitelist
-    tone_sample: str
 
     google_client_id: str
     google_client_secret: str
     google_refresh_token: str
-    anthropic_api_key: str
     smtp_user: str
     smtp_pass: str
     sms_to: str
@@ -112,12 +108,8 @@ def load_config() -> AgentConfig:
         learned=learned,
     )
 
-    tone = (CONFIG_DIR / "tone_sample.txt").read_text()
-
     return AgentConfig(
         dry_run=bool(agent["dry_run"]),
-        daily_spend_cap_usd=float(agent["daily_spend_cap_usd"]),
-        anthropic_model=agent["anthropic_model"],
         interview_slot_options=int(agent["interview_slot_options"]),
         interview_buffer_minutes=int(agent["interview_buffer_minutes"]),
         interview_slot_minutes=int(agent["interview_slot_minutes"]),
@@ -128,11 +120,9 @@ def load_config() -> AgentConfig:
         max_messages_per_run=int(agent["max_messages_per_run"]),
         working_hours=wh,
         whitelist=wl,
-        tone_sample=tone,
         google_client_id=_require_env("GOOGLE_CLIENT_ID"),
         google_client_secret=_require_env("GOOGLE_CLIENT_SECRET"),
         google_refresh_token=_require_env("GOOGLE_REFRESH_TOKEN"),
-        anthropic_api_key=_require_env("ANTHROPIC_API_KEY"),
         smtp_user=_require_env("SMTP_USER"),
         smtp_pass=_require_env("SMTP_PASS"),
         sms_to=_require_env("SMS_TO"),

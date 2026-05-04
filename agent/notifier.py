@@ -84,8 +84,6 @@ def send_morning_summary(
     reply_needed: list[tuple[Message, Classification]],
     urgent: list[tuple[Message, Classification]],
     invites: list[tuple[Message, Classification]],
-    spend_yesterday_usd: float,
-    spend_month_to_date_usd: float,
     mistakes: list[Message],
 ) -> None:
     when = datetime.now().strftime("%A, %B %d, %Y")
@@ -126,15 +124,8 @@ def send_morning_summary(
             lines.append(f"  • {m.sender_name or m.sender_email}: {m.subject}")
     lines.append("")
 
-    lines.append("=== SPEND ===")
-    lines.append(f"  Anthropic spend yesterday: ${spend_yesterday_usd:.4f}")
-    lines.append(f"  Month-to-date estimate:    ${spend_month_to_date_usd:.4f}")
-    lines.append(f"  Daily cap:                 ${cfg.daily_spend_cap_usd:.2f}")
-    lines.append("")
-    if cfg.dry_run:
-        lines.append("MODE: DRY RUN — no real trash/star/draft/SMS were issued.")
-    else:
-        lines.append("MODE: LIVE")
+    lines.append("MODE: " + ("DRY RUN — no real trash/star/draft/SMS issued." if cfg.dry_run else "LIVE"))
+    lines.append("CLASSIFIER: heuristic-only (no LLM, no API cost)")
 
     body = "\n".join(lines)
     subject = f"[gmail-agent] Morning summary — {when}"

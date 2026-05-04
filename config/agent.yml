@@ -6,13 +6,6 @@
 # Flip to false after the 5-day dry-run period.
 dry_run: true
 
-# Hard daily ceiling on Anthropic API spend in USD. The script tracks
-# token usage per run and bails if today's total would exceed this.
-daily_spend_cap_usd: 1.00
-
-# Anthropic model used for classification + drafting.
-anthropic_model: "claude-sonnet-4-6"
-
 # How many interview slot options to propose per draft.
 interview_slot_options: 3
 

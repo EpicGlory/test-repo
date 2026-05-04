@@ -16,8 +16,6 @@ LEARNED_WL_FILE = STATE_DIR / "learned_whitelist.json"
 class State:
     last_run_utc: datetime | None = None
     processed_message_ids: list[str] = field(default_factory=list)
-    spend_date: str | None = None
-    spend_today_usd: float = 0.0
     last_morning_email_date: str | None = None
 
     @classmethod
@@ -29,8 +27,6 @@ class State:
         return cls(
             last_run_utc=datetime.fromisoformat(last_run) if last_run else None,
             processed_message_ids=raw.get("processed_message_ids", []),
-            spend_date=raw.get("spend_date"),
-            spend_today_usd=float(raw.get("spend_today_usd", 0.0)),
             last_morning_email_date=raw.get("last_morning_email_date"),
         )
 
@@ -39,19 +35,9 @@ class State:
         payload = {
             "last_run_utc": self.last_run_utc.isoformat() if self.last_run_utc else None,
             "processed_message_ids": ids,
-            "spend_date": self.spend_date,
-            "spend_today_usd": round(self.spend_today_usd, 6),
             "last_morning_email_date": self.last_morning_email_date,
         }
         LAST_RUN_FILE.write_text(json.dumps(payload, indent=2) + "\n")
-
-    def reset_spend_if_new_day(self, today_utc_date: str) -> None:
-        if self.spend_date != today_utc_date:
-            self.spend_date = today_utc_date
-            self.spend_today_usd = 0.0
-
-    def add_spend(self, usd: float) -> None:
-        self.spend_today_usd += usd
 
 
 def load_learned_whitelist() -> list[str]:

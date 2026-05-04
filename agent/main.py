@@ -12,10 +12,8 @@ from __future__ import annotations
 import logging
 import sys
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import classifier as clf_mod
 from .calendar_client import CalendarClient
 from .classifier import Classification, classify
 from .config import AgentConfig, PAUSE_FILE, load_config
@@ -57,14 +55,6 @@ def main() -> int:
     cfg = load_config()
     state = State.load()
 
-    today_utc = datetime.now(timezone.utc).date().isoformat()
-    state.reset_spend_if_new_day(today_utc)
-
-    if state.spend_today_usd >= cfg.daily_spend_cap_usd:
-        log.warning("Daily spend cap hit (%.4f >= %.2f). Skipping run.",
-                    state.spend_today_usd, cfg.daily_spend_cap_usd)
-        return 0
-
     now_local = _now_local(cfg.working_hours.timezone)
     now_utc = datetime.now(timezone.utc)
     log.info("Run start. Local time: %s. Mode: %s. Dry run: %s",
@@ -98,10 +88,8 @@ def main() -> int:
 
     classifications: list[Classification] = []
     if new_msgs:
-        classifications, usd = classify(new_msgs, cfg)
-        state.add_spend(usd)
-        log.info("Classified %d msgs, spent $%.4f. Today: $%.4f",
-                 len(classifications), usd, state.spend_today_usd)
+        classifications = classify(new_msgs, cfg)
+        log.info("Classified %d msgs (heuristic).", len(classifications))
 
     # Apply actions
     actions = _apply_actions(gmail, cfg, new_msgs, classifications)
@@ -180,12 +168,11 @@ def _apply_actions(
 
 
 def _generate_draft(
-    gmail: GmailClient, cfg: AgentConfig, msg: Message, c: Classification, state: State,
+    gmail: GmailClient, cfg: AgentConfig, msg: Message, c: Classification, _state: State,
 ) -> None:
     try:
         calendar = CalendarClient(cfg.google_client_id, cfg.google_client_secret, cfg.google_refresh_token)
-        body, usd = draft_interview_reply(msg=msg, classification=c, cfg=cfg, calendar=calendar)
-        state.add_spend(usd)
+        body = draft_interview_reply(msg=msg, classification=c, cfg=cfg, calendar=calendar)
         in_reply_to = msg.raw_headers.get("message-id")
         gmail.create_draft_reply(
             thread_id=msg.thread_id,
@@ -195,7 +182,7 @@ def _generate_draft(
             in_reply_to=in_reply_to,
         )
         gmail.add_labels(msg.id, ["AutoDraft Interviews"])
-        log.info("Draft created for thread %s ($%.4f)", msg.thread_id, usd)
+        log.info("Draft created for thread %s", msg.thread_id)
     except Exception as e:
         log.exception("Draft generation failed for %s: %s", msg.id, e)
 
@@ -247,8 +234,6 @@ def _send_notifications(
                 reply_needed=reply_needed,
                 urgent=urgent,
                 invites=invites,
-                spend_yesterday_usd=state.spend_today_usd,
-                spend_month_to_date_usd=state.spend_today_usd,  # v1 placeholder
                 mistakes=[m for m in mistakes if m],
             )
             state.last_morning_email_date = now_local.date().isoformat()
